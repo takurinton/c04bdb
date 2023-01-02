@@ -1054,6 +1054,7 @@ dependencies = [
  "rand",
  "regex",
  "reqwest",
+ "serde_json",
  "serenity",
  "tokio",
 ]

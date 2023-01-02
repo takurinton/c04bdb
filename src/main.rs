@@ -17,9 +17,10 @@ use crate::commands::ping::PING_COMMAND;
 use crate::commands::cat::CAT_COMMAND;
 use crate::commands::praise::PRAISE_COMMAND;
 use crate::commands::friday::FRIDAY_COMMAND;
+use crate::commands::image::IMAGE_COMMAND;
 
 #[group]
-#[commands(ping, cat, praise, friday)]
+#[commands(ping, cat, praise, friday, image)]
 struct General;
 
 struct Handler;
