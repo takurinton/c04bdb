@@ -45,12 +45,18 @@ impl EventHandler for Handler {
         }
 
         // His saying "えらいねぇ" is not heartfelt at all...
-        let erai_message = msg.content.clone();
+        let message = msg.content.clone();
         let author = msg.author.name;
         let name = env::var("USER_Y").expect("user name is not defined");
-        if author == name && erai_message == "えらいねぇ" {
-            if let Err(why) = msg.channel_id.say(&ctx.http, format!("{author}の「えらいねぇ」は適当なんだよなぁ")).await {
-                println!("Error sending message: {:?}", why);
+        if author == name {
+            if message == "えらいねぇ" || message == "すごいねぇ" {
+                if let Err(why) = msg.channel_id.say(&ctx.http, format!("{author}の「{message}」は適当なんだよなぁ")).await {
+                    println!("Error sending message: {:?}", why);
+                }
+            } else if message == "いいね" {
+                if let Err(why) = msg.channel_id.say(&ctx.http, format!("本当にいいねって思ってんのか？")).await {
+                    println!("Error sending message: {:?}", why);
+                }
             }
         }
     }
