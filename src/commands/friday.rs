@@ -5,6 +5,11 @@ use serenity::prelude::*;
 
 #[command]
 async fn friday(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.channel_id.say(&ctx.http, ":tada: 花金だーワッショーイ！テンションAGEAGEマック :tada:").await?;
+    msg.channel_id
+        .say(
+            &ctx.http,
+            ":tada: 花金だーワッショーイ！テンションAGEAGEマック :tada:",
+        )
+        .await?;
     Ok(())
 }

@@ -1,5 +1,7 @@
-pub mod ping;
 pub mod cat;
-pub mod praise;
+pub mod chatgpt;
+pub mod eval;
 pub mod friday;
 pub mod image;
+pub mod praise;
+pub mod random;

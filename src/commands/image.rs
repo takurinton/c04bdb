@@ -7,9 +7,11 @@ use serenity::prelude::*;
 
 #[command]
 async fn image(ctx: &Context, msg: &Message) -> CommandResult {
-    let arg = msg.content.split_whitespace().nth(1).unwrap_or("");
+    let arg = msg.content.clone();
+    println!("arg: {}", arg);
     if arg != "" {
-        let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
+        let search_engine_id =
+            env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
         let api_key = env::var("API_KEY").expect("api key is not defined");
         let url = format!("https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&searchType=image&hl=ja&q={}", arg);
         let result = reqwest::get(&url).await?;
