@@ -14,11 +14,12 @@ use crate::commands::friday::FRIDAY_COMMAND;
 use crate::commands::image::IMAGE_COMMAND;
 use crate::commands::praise::PRAISE_COMMAND;
 use crate::commands::random::RANDOM_COMMAND;
+use crate::commands::todo::TODO_COMMAND;
 
 use crate::message::message::Handler;
 
 #[group]
-#[commands(cat, praise, friday, image, random, chatgpt, eval)]
+#[commands(cat, praise, friday, image, random, chatgpt, eval, todo)]
 struct General;
 
 #[tokio::main]

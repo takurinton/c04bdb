@@ -5,3 +5,4 @@ pub mod friday;
 pub mod image;
 pub mod praise;
 pub mod random;
+pub mod todo;
