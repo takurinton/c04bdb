@@ -1,12 +1,9 @@
-use std::env;
-
-use rand::Rng;
-
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
 use serenity::model::prelude::{ChannelId, GuildId};
 use serenity::prelude::*;
+use serenity::utils::colours;
 
 pub struct Handler;
 
@@ -23,10 +20,7 @@ impl EventHandler for Handler {
         // health check
         let mentions = msg.mentions;
         if mentions.len() > 0 {
-            let bot_id = match env::var("DISCORD_BOT_ID") {
-                Ok(id) => id,
-                Err(_) => return,
-            };
+            let bot_id = "1097033145674649675";
 
             for mention in mentions {
                 if mention.id.0.to_string() == bot_id {
@@ -42,98 +36,84 @@ impl EventHandler for Handler {
             Ok(re) => re,
             Err(_) => return,
         };
+        // match discord message urls
+        let matches = re
+            .find_iter(content)
+            .map(|m| content[m.0..m.1].to_string())
+            .collect::<Vec<String>>();
         // if message is discord message url, send opened message
-        if re.is_match(content) {
+        if matches.len() > 0 {
             // ids from url: e.g. https://discord.com/channels/{guild_id}/{channel_id}/{message_id}
-            let channel_id = match content.split("/").nth(5) {
-                Some(id) => match id.parse::<u64>() {
-                    Ok(id) => id,
-                    Err(_) => return,
-                },
-                None => return,
-            };
-            let message_id = match content.split("/").nth(6) {
-                Some(id) => match id.parse::<u64>() {
-                    Ok(id) => id,
-                    Err(_) => return,
-                },
-                None => return,
-            };
-
-            if let Some(message) = ChannelId(channel_id)
-                .message(&ctx.http, message_id)
-                .await
-                .ok()
-            {
-                // message with break
-                let message_with_break = message.content.replace("\n", "\n> ");
-                // image
-                let attachments = message
-                    .attachments
-                    .iter()
-                    .map(|a| a.url.clone())
-                    .collect::<Vec<String>>()
-                    .join(" ");
-
-                let message_with_attachments = format!("{} {}", message_with_break, attachments);
-
-                // guild info
-                let guild = GuildId(guild_id);
-
-                // user emoji
-                let emojis = match guild.emojis(&ctx.http).await {
-                    Ok(emojis) => emojis,
-                    Err(_) => return,
+            for content in matches {
+                let channel_id = match content.split("/").nth(5) {
+                    Some(id) => match id.parse::<u64>() {
+                        Ok(id) => id,
+                        Err(_) => return,
+                    },
+                    None => return,
                 };
-                let emoji = match emojis.iter().find(|e| e.name == message.author.name) {
-                    Some(emoji) => emoji,
-                    // default emoji
-                    // unwrap is safe because neko emoji is always exists
-                    None => emojis.iter().find(|e| e.name == "neko").unwrap(),
+                let message_id = match content.split("/").nth(6) {
+                    Some(id) => match id.parse::<u64>() {
+                        Ok(id) => id,
+                        Err(_) => return,
+                    },
+                    None => return,
                 };
 
-                // user display name
-                let display_name = match message.author.nick_in(&ctx.http, guild).await {
-                    Some(nick) => nick,
-                    None => message.author.name.clone(),
-                };
-                if let Err(why) = msg
-                    .channel_id
-                    .say(
-                        &ctx.http,
-                        format!(
-                            "{} **{}** in <#{}>
-> {}",
-                            emoji, display_name, channel_id, message_with_attachments
-                        ),
-                    )
+                if let Some(message) = ChannelId(channel_id)
+                    .message(&ctx.http, message_id) //
                     .await
+                    .ok()
                 {
-                    println!("Error sending message: {:?}", why);
-                }
-            }
-        }
+                    // guild info
+                    let guild = GuildId(guild_id);
 
-        // His saying "えらいねぇ" is not heartfelt at all...
-        let author = msg.author.name;
-        let name = env::var("USER_Y").expect("user name is not defined");
-        if author == name {
-            if content == "えらいねぇ" || content == "すごいねぇ" {
-                if let Err(why) = msg
-                    .channel_id
-                    .say(
-                        &ctx.http,
-                        format!("{author}の「{content}」は適当なんだよなぁ"),
-                    )
-                    .await
-                {
-                    println!("Error sending message: {:?}", why);
-                }
-            } else if content == "いいね" {
-                let res_list = ["本当にいいねって思ってんのか？", "いいね(笑)"];
-                let index = rand::thread_rng().gen_range(0..res_list.len());
-                if let Err(why) = msg.channel_id.say(&ctx.http, res_list[index]).await {
-                    println!("Error sending message: {:?}", why);
+                    // user display name
+                    let display_name = match message.author.nick_in(&ctx.http, guild).await {
+                        Some(nick) => nick,
+                        None => message.author.name.clone(),
+                    };
+
+                    let user_icon = match message.author.avatar_url() {
+                        Some(url) => url,
+                        None => message.author.default_avatar_url(),
+                    };
+
+                    let channel_name = match guild.channels(&ctx.http).await {
+                        Ok(channels) => match channels.get(&ChannelId(channel_id)) {
+                            Some(channel) => channel.name.clone(),
+                            None => return,
+                        },
+                        Err(_) => return,
+                    };
+
+                    if let Err(why) = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.author(|a| {
+                                    a.name(display_name);
+                                    a.icon_url(user_icon);
+                                    a
+                                });
+                                e.description(message.content);
+                                e.timestamp(message.timestamp);
+                                message.attachments.iter().for_each(|a| {
+                                    e.image(a.url.clone());
+                                });
+                                e.footer(|f| {
+                                    f.text(format!("#{}", channel_name));
+                                    f
+                                });
+                                e.color(colours::branding::YELLOW);
+                                e
+                            });
+                            m
+                        })
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    }
                 }
             }
         }
