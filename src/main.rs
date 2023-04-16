@@ -12,25 +12,24 @@ use crate::commands::chatgpt::CHATGPT_COMMAND;
 use crate::commands::eval::EVAL_COMMAND;
 use crate::commands::friday::FRIDAY_COMMAND;
 use crate::commands::image::IMAGE_COMMAND;
-use crate::commands::praise::PRAISE_COMMAND;
 use crate::commands::random::RANDOM_COMMAND;
 use crate::commands::todo::TODO_COMMAND;
 
 use crate::message::message::Handler;
 
 #[group]
-#[commands(cat, praise, friday, image, random, chatgpt, eval, todo)]
+#[commands(cat, friday, image, random, chatgpt, eval, todo)]
 struct General;
 
 #[tokio::main]
 async fn main() {
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let token = env::var("RINTON_DISCORD_TOKEN").expect("Expected a token in the environment");
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
     let framework = StandardFramework::new()
-        .configure(|c| c.prefix("~"))
+        .configure(|c| c.prefix("/"))
         .group(&GENERAL_GROUP);
 
     let mut client = Client::builder(&token, intents)
