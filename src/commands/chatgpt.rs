@@ -27,7 +27,7 @@ struct ChatGPTResponse {
 #[command]
 async fn chatgpt(ctx: &Context, msg: &Message) -> CommandResult {
     let channel_id = &msg.channel_id;
-    let messages = msg.content.clone().replace("~chatgpt ", "");
+    let messages = msg.content.clone().replace("/chatgpt ", "");
 
     let typing = channel_id.start_typing(&ctx.http)?;
 
