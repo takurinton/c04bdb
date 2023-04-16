@@ -344,7 +344,7 @@ fn test_safe_eval() {
 
 #[command]
 async fn eval(ctx: &Context, msg: &Message) -> CommandResult {
-    let eval_string = msg.content.replace("~eval ", "");
+    let eval_string = msg.content.replace("/eval ", "");
     let result = match safe_eval(eval_string) {
         Ok(result) => result,
         Err(e) => {
