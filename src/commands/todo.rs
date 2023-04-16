@@ -1,4 +1,3 @@
-
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::CommandResult;
 use serenity::model::prelude::*;
@@ -32,8 +31,8 @@ async fn todo(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let db_channel_id = env::var("DISCORD_DB_CHANNEL_ID")
-        .expect("search engine id is not defined")
+    let db_channel_id = env::var("DISCORD_DB_CHANNEL_ID_RINTON_BOT")
+        .expect("db channel id is not defined")
         .parse::<u64>()?;
     let guild_id = match msg.guild_id {
         Some(guild_id) => guild_id,
