@@ -4,6 +4,27 @@ use serenity::framework::standard::CommandResult;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Owner {
+    avatar_url: String,
+}
+
+#[derive(Deserialize)]
+struct GithubTrendItem {
+    full_name: String,
+    html_url: String,
+    description: String,
+    stargazers_count: u32,
+    owner: Owner,
+}
+
+#[derive(Deserialize)]
+struct GithubTrend {
+    items: Vec<GithubTrendItem>,
+}
+
 #[command]
 async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
     let channel_id = msg.channel_id;
@@ -15,14 +36,14 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
     );
 
     let client = reqwest::Client::new();
-    let result = client
+    let response = client
         .get(url)
         .header(header::ACCEPT, "application/json")
         .header(header::USER_AGENT, "Rinton")
         .send();
 
-    let result = match result.await {
-        Ok(result) => result,
+    let response = match response.await {
+        Ok(response) => response,
         Err(_) => {
             let _ = channel_id
                 .say(&ctx.http, "通信エラーが発生しました。")
@@ -31,7 +52,7 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let _ = match result.status() {
+    let _ = match response.status() {
         reqwest::StatusCode::OK => (),
         reqwest::StatusCode::UNAUTHORIZED => {
             let _ = channel_id
@@ -62,9 +83,10 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let body = match result.json::<serde_json::Value>().await {
+    let body = match response.json::<GithubTrend>().await {
         Ok(body) => body,
-        Err(_) => {
+        Err(e) => {
+            println!("{:?}", e);
             let _ = channel_id
                 .say(&ctx.http, "json の parse に失敗しました。")
                 .await;
@@ -72,36 +94,12 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
         }
     };
 
-    let items = match body["items"].as_array() {
-        Some(items) => items,
-        None => {
-            let _ = channel_id.say(&ctx.http, "レスポンスが空です。").await;
-            return Ok(());
-        }
-    };
-
-    for item in items {
-        let name = match item["full_name"].as_str() {
-            Some(name) => name,
-            None => return Ok(()),
-        };
-        let avatar_url = match item["owner"]["avatar_url"].as_str() {
-            Some(avatar_url) => avatar_url,
-            None => return Ok(()),
-        };
-        let description = match item["description"].as_str() {
-            Some(description) => description,
-            None => return Ok(()),
-        };
-        let html_url = match item["html_url"].as_str() {
-            Some(html_url) => html_url,
-            None => return Ok(()),
-        };
-        let stars = match item["stargazers_count"].as_u64() {
-            Some(stars) => stars,
-            None => return Ok(()),
-        };
-
+    for item in body.items {
+        let name = item.full_name;
+        let avatar_url = item.owner.avatar_url;
+        let html_url = item.html_url;
+        let description = item.description;
+        let stars = item.stargazers_count;
         let _ = channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
@@ -110,7 +108,6 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
                         a
                     });
                     e.description(description);
-                    e.url(html_url);
                     e.field("Stars", stars, true);
                     e
                 });
