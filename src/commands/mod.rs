@@ -6,3 +6,4 @@ pub mod github_trend;
 pub mod image;
 pub mod random;
 pub mod todo;
+pub mod wiki;

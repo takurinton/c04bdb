@@ -15,11 +15,12 @@ use crate::commands::github_trend::GITHUB_TREND_COMMAND;
 use crate::commands::image::IMAGE_COMMAND;
 use crate::commands::random::RANDOM_COMMAND;
 use crate::commands::todo::TODO_COMMAND;
+use crate::commands::wiki::WIKI_COMMAND;
 
 use crate::message::message::Handler;
 
 #[group]
-#[commands(cat, friday, image, random, chatgpt, eval, todo, github_trend)]
+#[commands(cat, friday, image, random, chatgpt, eval, todo, github_trend, wiki)]
 struct General;
 
 #[tokio::main]
