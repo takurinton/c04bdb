@@ -28,7 +28,7 @@ struct Response {
 #[command]
 async fn wiki(ctx: &Context, msg: &Message) -> CommandResult {
     let channel_id = &msg.channel_id;
-    let text = msg.content.clone().replace("~wiki ", "");
+    let text = msg.content.clone().replace("/wiki ", "");
     // let text = to_parcent_encoding(text);
 
     let typing = channel_id.start_typing(&ctx.http)?;
