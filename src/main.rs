@@ -7,7 +7,6 @@ use serenity::framework::StandardFramework;
 use serenity::model::prelude::interaction::InteractionResponseType;
 use serenity::prelude::*;
 
-use crate::commands::cat::CAT_COMMAND;
 use crate::commands::chatgpt::CHATGPT_COMMAND;
 use crate::commands::friday::FRIDAY_COMMAND;
 use crate::commands::github_trend::GITHUB_TREND_COMMAND;
@@ -141,6 +140,7 @@ impl EventHandler for Handler {
         if let Interaction::ApplicationCommand(command) = interaction {
             let content = match command.data.name.as_str() {
                 "wiki" => commands::random::run(&command.data.options),
+                "cat" => commands::cat::run(&command.data.options),
                 "wiki" => commands::wiki::run(&command.data.options).await,
                 "eval" => commands::eval::run(&command.data.options).await,
                 "todo" => commands::todo::run(&command.data.options, &ctx).await,
@@ -166,6 +166,7 @@ impl EventHandler for Handler {
 
         let _ = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands.create_application_command(|command| commands::random::register(command));
+            commands.create_application_command(|command| commands::cat::register(command));
             commands.create_application_command(|command| commands::wiki::register(command));
             commands.create_application_command(|command| commands::eval::register(command));
             commands.create_application_command(|command| commands::todo::register(command));
