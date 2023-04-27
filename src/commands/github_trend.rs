@@ -1,10 +1,11 @@
 use reqwest::header;
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::CommandResult;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-
 use serde::Deserialize;
+use serenity::builder::CreateApplicationCommand;
+use serenity::model::prelude::command::CommandOptionType;
+use serenity::model::prelude::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOptionValue,
+};
+use serenity::prelude::*;
 
 #[derive(Deserialize)]
 struct Owner {
@@ -25,15 +26,20 @@ struct GithubTrend {
     items: Vec<GithubTrendItem>,
 }
 
-#[command]
-async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
-    let channel_id = msg.channel_id;
-    let content = &msg.content;
-    let content = content.replace("/github_trend ", "");
-    let url = format!(
-        "https://api.github.com/search/repositories?q={}&order=desc&per_page=10&since=daily",
-        content
-    );
+pub async fn run(command: &ApplicationCommandInteraction, ctx: &Context) -> String {
+    let options = &command.data.options;
+    let language = match options.get(0) {
+        Some(option) => match &option.resolved {
+            Some(value) => match value {
+                CommandDataOptionValue::String(text) => text,
+                _ => return "言語を指定してください".to_string(),
+            },
+            None => return "言語を指定してください".to_string(),
+        },
+        None => return "言語を指定してください".to_string(),
+    };
+
+    let url = format!("https://api.github.com/search/repositories?q=language:{language}&order=desc&per_page=10&since=daily");
 
     let client = reqwest::Client::new();
     let response = client
@@ -44,53 +50,25 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
 
     let response = match response.await {
         Ok(response) => response,
-        Err(_) => {
-            let _ = channel_id
-                .say(&ctx.http, "通信エラーが発生しました。")
-                .await;
-            return Ok(());
-        }
+        Err(_) => return "通信エラーが発生しました。".to_string(),
     };
 
     let _ = match response.status() {
         reqwest::StatusCode::OK => (),
         reqwest::StatusCode::UNAUTHORIZED => {
-            let _ = channel_id
-                .say(&ctx.http, "unauthorized. 時間を置いてやり直してください。")
-                .await;
-            return Ok(());
+            return "unauthorized. 時間を置いてやり直してください。".to_string()
         }
         reqwest::StatusCode::FORBIDDEN => {
-            let _ = channel_id
-                .say(&ctx.http, "forhidden. 時間を置いてやり直してください。")
-                .await;
-            return Ok(());
+            return "forhidden. 時間を置いてやり直してください。".to_string()
         }
-        reqwest::StatusCode::NOT_FOUND => {
-            let _ = channel_id
-                .say(&ctx.http, "リポジトリが見つかりませんでした。")
-                .await;
-            return Ok(());
-        }
-        _ => {
-            let _ = channel_id
-                .say(
-                    &ctx.http,
-                    "予期しないエラーが発生しました。時間を置いてやり直してください。",
-                )
-                .await;
-            return Ok(());
-        }
+        reqwest::StatusCode::NOT_FOUND => return "リポジトリが見つかりませんでした。".to_string(),
+        _ => return "予期しないエラーが発生しました。時間を置いてやり直してください。".to_string(),
     };
 
     let body = match response.json::<GithubTrend>().await {
         Ok(body) => body,
-        Err(e) => {
-            println!("{:?}", e);
-            let _ = channel_id
-                .say(&ctx.http, "json の parse に失敗しました。")
-                .await;
-            return Ok(());
+        Err(_) => {
+            return "json の parse に失敗しました。".to_string();
         }
     };
 
@@ -100,7 +78,8 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
         let html_url = item.html_url;
         let description = item.description;
         let stars = item.stargazers_count;
-        let _ = channel_id
+        let _ = &command
+            .channel_id
             .send_message(&ctx.http, |m| {
                 m.embed(|e| {
                     e.author(|a| {
@@ -115,5 +94,19 @@ async fn github_trend(ctx: &Context, msg: &Message) -> CommandResult {
             })
             .await;
     }
-    Ok(())
+
+    return "".to_string();
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command
+        .name("github_trend")
+        .description("指定した言語のGitHub上でのトレンドを取得します")
+        .create_option(|option| {
+            option
+                .name("language")
+                .description("言語を入力してください")
+                .kind(CommandOptionType::String)
+                .required(true)
+        })
 }

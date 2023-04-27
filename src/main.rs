@@ -8,7 +8,6 @@ use serenity::model::prelude::interaction::InteractionResponseType;
 use serenity::prelude::*;
 
 use crate::commands::chatgpt::CHATGPT_COMMAND;
-use crate::commands::github_trend::GITHUB_TREND_COMMAND;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
@@ -18,7 +17,7 @@ use serenity::model::prelude::{ChannelId, GuildId};
 use serenity::utils::colours;
 
 #[group]
-#[commands(cat, friday, image, random, chatgpt, eval, todo, github_trend, wiki)]
+#[commands(chatgpt)]
 struct General;
 
 pub struct Handler;
@@ -145,6 +144,7 @@ impl EventHandler for Handler {
                 "eval" => commands::eval::run(&command.data.options).await,
                 "todo" => commands::todo::run(&command.data.options, &ctx).await,
                 "image" => commands::image::run(&command.data.options).await,
+                "github_trend" => commands::github_trend::run(&command, &ctx).await,
                 _ => "not implemented :(".to_string(),
             };
 
@@ -172,6 +172,8 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::eval::register(command));
             commands.create_application_command(|command| commands::todo::register(command));
             commands.create_application_command(|command| commands::image::register(command));
+            commands
+                .create_application_command(|command| commands::github_trend::register(command));
             commands.create_application_command(
                 |command: &mut serenity::builder::CreateApplicationCommand| {
                     commands::todo::register(command)
