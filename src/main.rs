@@ -9,7 +9,6 @@ use serenity::prelude::*;
 
 use crate::commands::cat::CAT_COMMAND;
 use crate::commands::chatgpt::CHATGPT_COMMAND;
-use crate::commands::eval::EVAL_COMMAND;
 use crate::commands::friday::FRIDAY_COMMAND;
 use crate::commands::github_trend::GITHUB_TREND_COMMAND;
 use crate::commands::image::IMAGE_COMMAND;
@@ -145,6 +144,7 @@ impl EventHandler for Handler {
         if let Interaction::ApplicationCommand(command) = interaction {
             let content = match command.data.name.as_str() {
                 "wiki" => commands::wiki::run(&command.data.options).await,
+                "eval" => commands::eval::run(&command.data.options).await,
                 _ => "not implemented :(".to_string(),
             };
 
@@ -165,7 +165,8 @@ impl EventHandler for Handler {
         let guild_id = GuildId(889012300705591307);
 
         let _ = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
-            commands.create_application_command(|command| commands::wiki::register(command))
+            commands.create_application_command(|command| commands::wiki::register(command));
+            commands.create_application_command(|command| commands::eval::register(command))
         })
         .await;
     }

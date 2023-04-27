@@ -1,7 +1,8 @@
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::CommandResult;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
+use serenity::builder::CreateApplicationCommand;
+use serenity::model::prelude::command::CommandOptionType;
+use serenity::model::prelude::interaction::application_command::{
+    CommandDataOption, CommandDataOptionValue,
+};
 
 #[derive(Clone, PartialEq, Debug)]
 enum Token {
@@ -342,16 +343,35 @@ fn test_safe_eval() {
     assert_eq!(eval5, Ok("515".to_string()));
 }
 
-#[command]
-async fn eval(ctx: &Context, msg: &Message) -> CommandResult {
-    let eval_string = msg.content.replace("/eval ", "");
-    let result = match safe_eval(eval_string) {
-        Ok(result) => result,
-        Err(e) => {
-            msg.channel_id.say(&ctx.http, e).await?;
-            return Ok(());
-        }
+pub async fn run(options: &[CommandDataOption]) -> String {
+    let eval_target = match options.get(0) {
+        Some(option) => match &option.resolved {
+            Some(value) => match value {
+                CommandDataOptionValue::String(eval_target) => eval_target,
+                _ => return "計算式を入力してください".to_string(),
+            },
+            None => return "計算式を入力してください".to_string(),
+        },
+        None => return "計算式を入力してください".to_string(),
     };
-    msg.channel_id.say(&ctx.http, result).await?;
-    Ok(())
+
+    let result = match safe_eval(eval_target.to_string()) {
+        Ok(result) => result,
+        Err(err) => err,
+    };
+
+    format!("{} = {}", eval_target, result)
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command
+        .name("eval")
+        .description("演算します")
+        .create_option(|option| {
+            option
+                .name("eval")
+                .description("計算式")
+                .kind(CommandOptionType::String)
+                .required(true)
+        })
 }
