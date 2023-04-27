@@ -142,6 +142,7 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let content = match command.data.name.as_str() {
+                "wiki" => commands::random::run(&command.data.options),
                 "wiki" => commands::wiki::run(&command.data.options).await,
                 "eval" => commands::eval::run(&command.data.options).await,
                 "todo" => commands::eval::run(&command.data.options).await,
@@ -165,6 +166,7 @@ impl EventHandler for Handler {
         let guild_id = GuildId(889012300705591307);
 
         let _ = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+            commands.create_application_command(|command| commands::random::register(command));
             commands.create_application_command(|command| commands::wiki::register(command));
             commands.create_application_command(|command| commands::eval::register(command));
             commands.create_application_command(|command| commands::todo::register(command));
