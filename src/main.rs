@@ -16,14 +16,16 @@ use crate::commands::random::RANDOM_COMMAND;
 use crate::commands::todo::TODO_COMMAND;
 use crate::commands::wiki::WIKI_COMMAND;
 
+use serenity::async_trait;
+use serenity::model::application::interaction::Interaction;
+use serenity::model::channel::Message;
+use serenity::model::gateway::Ready;
+use serenity::model::prelude::{ChannelId, GuildId};
+use serenity::utils::colours;
+
 #[group]
 #[commands(cat, friday, image, random, chatgpt, eval, todo, github_trend, wiki)]
 struct General;
-
-use serenity::async_trait;
-use serenity::model::channel::Message;
-use serenity::model::prelude::{ChannelId, GuildId};
-use serenity::utils::colours;
 
 pub struct Handler;
 
@@ -138,6 +140,8 @@ impl EventHandler for Handler {
             }
         }
     }
+
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {}
 }
 
 #[tokio::main]
