@@ -145,7 +145,7 @@ impl EventHandler for Handler {
                 "wiki" => commands::random::run(&command.data.options),
                 "wiki" => commands::wiki::run(&command.data.options).await,
                 "eval" => commands::eval::run(&command.data.options).await,
-                "todo" => commands::eval::run(&command.data.options).await,
+                "todo" => commands::todo::run(&command.data.options, &ctx).await,
                 "image" => commands::image::run(&command.data.options).await,
                 _ => "not implemented :(".to_string(),
             };
