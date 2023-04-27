@@ -1,15 +1,10 @@
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::CommandResult;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
+use serenity::builder::CreateApplicationCommand;
+use serenity::model::prelude::interaction::application_command::CommandDataOption;
 
-#[command]
-async fn friday(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.channel_id
-        .say(
-            &ctx.http,
-            ":tada: 花金だーワッショーイ！テンションAGEAGEマック :tada:",
-        )
-        .await?;
-    Ok(())
+pub fn run(_options: &[CommandDataOption]) -> String {
+    ":tada: 花金だーワッショーイ！テンションAGEAGEマック :tada:".to_string()
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command.name("friday").description("金曜日をお祝いします")
 }

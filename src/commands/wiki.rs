@@ -1,10 +1,11 @@
 use reqwest;
-use std::env;
+use serenity::builder::CreateApplicationCommand;
+use serenity::model::prelude::command::CommandOptionType;
+use serenity::model::prelude::interaction::application_command::{
+    CommandDataOption, CommandDataOptionValue,
+};
 
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::CommandResult;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
+use std::env;
 
 use serde::Deserialize;
 
@@ -25,13 +26,49 @@ struct Response {
     query: Query,
 }
 
-#[command]
-async fn wiki(ctx: &Context, msg: &Message) -> CommandResult {
-    let channel_id = &msg.channel_id;
-    let text = msg.content.clone().replace("/wiki ", "");
-    // let text = to_parcent_encoding(text);
+fn hex_to_u8(hex: u8) -> u8 {
+    match hex {
+        b'0'..=b'9' => hex - b'0',
+        b'a'..=b'f' => hex - b'a' + 10,
+        b'A'..=b'F' => hex - b'A' + 10,
+        _ => panic!("Invalid hex digit: {}", hex),
+    }
+}
 
-    let typing = channel_id.start_typing(&ctx.http)?;
+fn percent_decode(input: &str) -> String {
+    use std::str;
+
+    let mut out = Vec::new();
+    let mut i = 0;
+    let bytes = input.as_bytes();
+    while i < bytes.len() {
+        match bytes[i] {
+            b'%' if i + 2 < bytes.len() => {
+                let h = hex_to_u8(bytes[i + 1]);
+                let l = hex_to_u8(bytes[i + 2]);
+                out.push((h << 4) | l);
+                i += 3;
+            }
+            b => {
+                out.push(b);
+                i += 1;
+            }
+        }
+    }
+    str::from_utf8(&out).unwrap().to_string()
+}
+
+pub async fn run(options: &[CommandDataOption]) -> String {
+    let text = match options.get(0) {
+        Some(option) => match &option.resolved {
+            Some(value) => match value {
+                CommandDataOptionValue::String(text) => text,
+                _ => return "検索に失敗しました。".to_string(),
+            },
+            None => return "検索に失敗しました。".to_string(),
+        },
+        None => return "クエリが見つかりませんでした。".to_string(),
+    };
 
     let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
     let api_key = env::var("API_KEY").expect("api key is not defined");
@@ -39,15 +76,22 @@ async fn wiki(ctx: &Context, msg: &Message) -> CommandResult {
         "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja&q={}+site:ja.wikipedia.org",
         text
     );
-    let result = reqwest::get(&url).await?;
-    let body = result.json::<serde_json::Value>().await?;
+    let result = match reqwest::get(&url).await {
+        Ok(result) => result,
+        Err(_) => {
+            return "Google 検索でエラーが発生しました。".to_string();
+        }
+    };
+    let body = match result.json::<serde_json::Value>().await {
+        Ok(body) => body,
+        Err(_) => {
+            return "Google 検索でエラーが発生しました。".to_string();
+        }
+    };
     let items = match body["items"].as_array() {
         Some(items) => items,
         None => {
-            msg.channel_id
-                .say(&ctx.http, "Google 検索でエラーが発生しました。")
-                .await?;
-            return Ok(());
+            return "Google 検索でエラーが発生しました。".to_string();
         }
     };
 
@@ -57,13 +101,10 @@ async fn wiki(ctx: &Context, msg: &Message) -> CommandResult {
     }) {
         Some(item) => match item["link"].as_str() {
             Some(link) => link,
-            None => return Ok(()),
+            None => return "wikipedia の取得に失敗しました。".to_string(),
         },
         None => {
-            msg.channel_id
-                .say(&ctx.http, "そのような項目はありません。")
-                .await?;
-            return Ok(());
+            return "そのような項目はありません。".to_string();
         }
     };
 
@@ -75,28 +116,35 @@ async fn wiki(ctx: &Context, msg: &Message) -> CommandResult {
         Ok(response) => match response.json::<Response>().await {
             Ok(response) => response,
             Err(_) => {
-                msg.channel_id
-                    .say(&ctx.http, "wikipedia の取得に失敗しました。")
-                    .await?;
-                return Ok(());
+                return "wikipedia の取得に失敗しました。".to_string();
             },
         },
         Err(_) => {
-            msg.channel_id
-                .say(&ctx.http, "通信エラーが発生しました。")
-                .await?;
-            return Ok(());
+            return "通信エラーが発生しました".to_string();
         },
     };
 
-    let _ = typing.stop();
     let res = format!(
-        "{}
+        "検索クエリ: {}
+{}
 https://ja.wikipedia.org/wiki/{}",
+        percent_decode(text.as_str()),
         response.query.pages.iter().next().unwrap().1.extract,
         response.query.pages.iter().next().unwrap().1.title
     );
 
-    msg.channel_id.say(&ctx.http, res).await?;
-    Ok(())
+    res
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command
+        .name("wiki")
+        .description("Wikipedia から検索して概要を返します。")
+        .create_option(|option| {
+            option
+                .name("query")
+                .description("検索する文字列")
+                .kind(CommandOptionType::String)
+                .required(true)
+        })
 }

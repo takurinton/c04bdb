@@ -1,50 +1,64 @@
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::CommandResult;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
+extern crate rand;
 use std::env;
 
-#[command]
-async fn todo(ctx: &Context, msg: &Message) -> CommandResult {
-    let operation_list = ["add", "rm", "ls"];
-    let operation = match msg.content.split_whitespace().nth(1) {
-        Some(operation) => match operation_list.contains(&operation) {
-            true => operation,
-            false => {
-                msg.channel_id
-                    .say(
-                        &ctx.http,
-                        format!(
-                            "不正な操作です。{} のどれかを指定してください",
-                            operation_list.join(", ")
-                        ),
-                    )
-                    .await?;
-                return Ok(());
-            }
+use serenity::builder::CreateApplicationCommand;
+use serenity::model::prelude::command::CommandOptionType;
+use serenity::model::prelude::interaction::application_command::{
+    CommandDataOption, CommandDataOptionValue,
+};
+use serenity::model::prelude::{ChannelId, GuildId};
+use serenity::prelude::Context;
+
+pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
+    let operation = match options.iter().find(|option| option.name == "operation") {
+        Some(option) => match &option.resolved {
+            Some(value) => match value {
+                CommandDataOptionValue::String(text) => text,
+                _ => return "オペレーションが不正です".to_string(),
+            },
+            None => return "オペレーションが不正です".to_string(),
         },
-        None => {
-            msg.channel_id
-                .say(&ctx.http, "操作を指定してください。")
-                .await?;
-            return Ok(());
-        }
+        None => return "オペレーションが不正です".to_string(),
     };
 
-    let db_channel_id = env::var("DISCORD_DB_CHANNEL_ID_RINTON_BOT")
-        .expect("db channel id is not defined")
-        .parse::<u64>()?;
-    let guild_id = match msg.guild_id {
-        Some(guild_id) => guild_id,
-        None => return Ok(()),
+    let todo_message = match options.iter().find(|option| option.name == "message") {
+        Some(option) => match &option.resolved {
+            Some(value) => match value {
+                CommandDataOptionValue::String(text) => text,
+                _ => "",
+            },
+            None => "",
+        },
+        None => "",
     };
+
+    let todo_id = match options.iter().find(|option| option.name == "id") {
+        Some(option) => match &option.resolved {
+            Some(value) => match value {
+                CommandDataOptionValue::String(text) => text,
+                _ => "",
+            },
+            None => "",
+        },
+        None => "",
+    };
+
+    let db_channel_id = match env::var("DISCORD_DB_CHANNEL_ID")
+        .expect("search engine id is not defined")
+        .parse::<u64>()
+    {
+        Ok(db_channel_id) => db_channel_id,
+        Err(_) => return "DBチャンネルのIDが見つかりません。".to_string(),
+    };
+    let guild_id = GuildId(804003874037563402);
+
     let channels = match guild_id.channels(&ctx.http).await {
         Ok(channel) => channel,
-        Err(_) => return Ok(()),
+        Err(_) => return "チャンネル一覧の取得に失敗しました".to_string(),
     };
     let db_channel = match channels.get(&ChannelId(db_channel_id)) {
         Some(channel) => channel,
-        None => return Ok(()),
+        None => return "DBチャンネルが見つかりません。".to_string(),
     };
 
     let messages = match db_channel
@@ -55,20 +69,11 @@ async fn todo(ctx: &Context, msg: &Message) -> CommandResult {
             .into_iter()
             .filter(|message| message.content.starts_with("todo_message"))
             .collect::<Vec<_>>(),
-        Err(_) => return Ok(()),
+        Err(_) => return "メッセージの取得に失敗しました".to_string(),
     };
 
-    match operation {
+    match operation.as_str() {
         "add" => {
-            let todo_message = match msg.content.split_whitespace().nth(2) {
-                Some(todo_message) => todo_message,
-                None => {
-                    msg.channel_id
-                        .say(&ctx.http, "追加するメッセージを指定してください。")
-                        .await?;
-                    return Ok(());
-                }
-            };
             let id = match messages.len() {
                 0 => 1,
                 _ => {
@@ -88,74 +93,116 @@ async fn todo(ctx: &Context, msg: &Message) -> CommandResult {
                     ids.last().unwrap() + 1
                 }
             };
-            db_channel
+
+            let _ = match ChannelId(db_channel_id)
                 .say(&ctx.http, format!("todo_message {} {}", id, todo_message))
-                .await?;
-            msg.channel_id
-                .say(
-                    &ctx.http,
-                    format!("{}: {} を追加しました。", id, todo_message),
-                )
-                .await?;
+                .await
+            {
+                Ok(_) => "",
+                Err(_) => return "メッセージの送信に失敗しました".to_string(),
+            };
+            return format!("{}: {} を追加しました。", id, todo_message);
         }
         "rm" => {
-            let todo_message = match msg.content.split_whitespace().nth(2) {
-                Some(todo_message) => todo_message,
-                None => {
-                    msg.channel_id
-                        .say(&ctx.http, "削除するメッセージを指定してください。")
-                        .await?;
-                    return Ok(());
-                }
-            };
             match messages.iter().position(|x| {
                 x.content.split_whitespace().nth(1).unwrap() == todo_message
                     || x.content.split_whitespace().nth(2).unwrap() == todo_message
+                    || x.content.split_whitespace().nth(1).unwrap() == todo_id
+                    || x.content.split_whitespace().nth(2).unwrap() == todo_id
             }) {
                 Some(index) => {
                     let todo_message_id = messages[index].id;
-                    ChannelId(db_channel_id)
+                    match ChannelId(db_channel_id)
                         .delete_message(&ctx.http, todo_message_id)
-                        .await?;
-                    msg.channel_id
-                        .say(&ctx.http, format!("{} を削除しました。", todo_message))
-                        .await?;
+                        .await
+                    {
+                        Ok(_) => (),
+                        Err(_) => return "メッセージの削除に失敗しました".to_string(),
+                    }
+                    return format!("{} を削除しました。", todo_message_id);
                 }
                 None => {
-                    msg.channel_id
-                        .say(&ctx.http, format!("{} は存在しません。", todo_message))
-                        .await?;
+                    return format!("{} は見つかりませんでした。", todo_message);
                 }
             }
         }
         "ls" => {
             if messages.is_empty() {
-                msg.channel_id
-                    .say(&ctx.http, "TODOリストには何もありません。")
-                    .await?;
+                return "TODOリストには何もありません。".to_string();
             } else {
-                msg.channel_id
-                    .say(
-                        &ctx.http,
-                        format!(
-                            "TODOリスト:
+                return format!(
+                    "TODOリスト:
 ・{}",
-                            messages
-                                .iter()
-                                .map(|x| format!(
-                                    "{} {}",
-                                    x.content.split_whitespace().nth(1).unwrap(),
-                                    x.content.split_whitespace().nth(2).unwrap()
-                                ))
-                                .collect::<Vec<_>>()
-                                .join("\n・")
-                        ),
-                    )
-                    .await?;
+                    messages
+                        .iter()
+                        .map(|x| format!(
+                            "{} {}",
+                            x.content.split_whitespace().nth(1).unwrap(),
+                            x.content.split_whitespace().nth(2).unwrap()
+                        ))
+                        .collect::<Vec<_>>()
+                        .join("\n・")
+                );
+            }
+        }
+
+        "edit" => {
+            match messages.iter().position(|x| {
+                x.content.split_whitespace().nth(1).unwrap() == todo_message
+                    || x.content.split_whitespace().nth(2).unwrap() == todo_message
+                    || x.content.split_whitespace().nth(1).unwrap() == todo_id
+                    || x.content.split_whitespace().nth(2).unwrap() == todo_id
+            }) {
+                Some(index) => {
+                    let todo_message_id = messages[index].id;
+                    let _ = match ChannelId(db_channel_id)
+                        .edit_message(&ctx.http, todo_message_id, |m| {
+                            m.content(format!("todo_message {} {}", todo_id, todo_message))
+                        })
+                        .await
+                    {
+                        Ok(_) => (),
+                        Err(_) => return "メッセージの編集に失敗しました".to_string(),
+                    };
+
+                    return format!("{}: {} を編集しました。", todo_id, todo_message);
+                }
+                None => return format!("{} は存在しません。", todo_id),
             }
         }
         _ => {}
     }
 
-    Ok(())
+    "".to_string()
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command
+        .name("todo")
+        .description("todo list を管理します")
+        .create_option(|option| {
+            option
+                .name("operation")
+                .kind(CommandOptionType::String)
+                .description("オペレーション")
+                .add_string_choice("add", "add")
+                .add_string_choice("rm", "rm")
+                .add_string_choice("ls", "ls")
+                .add_string_choice("edit", "edit")
+                .required(true)
+        })
+        .create_option(|option| {
+            option
+                .name("message")
+                .kind(CommandOptionType::String)
+                .description("メッセージ")
+                .required(false)
+        })
+        .create_option(|option| {
+            option
+                .name("id")
+                .kind(CommandOptionType::String)
+                .description("ID")
+                .required(false)
+        })
 }
