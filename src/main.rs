@@ -13,7 +13,6 @@ use crate::commands::friday::FRIDAY_COMMAND;
 use crate::commands::github_trend::GITHUB_TREND_COMMAND;
 use crate::commands::image::IMAGE_COMMAND;
 use crate::commands::random::RANDOM_COMMAND;
-use crate::commands::todo::TODO_COMMAND;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
@@ -145,6 +144,7 @@ impl EventHandler for Handler {
             let content = match command.data.name.as_str() {
                 "wiki" => commands::wiki::run(&command.data.options).await,
                 "eval" => commands::eval::run(&command.data.options).await,
+                "todo" => commands::eval::run(&command.data.options).await,
                 _ => "not implemented :(".to_string(),
             };
 
@@ -166,7 +166,13 @@ impl EventHandler for Handler {
 
         let _ = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
             commands.create_application_command(|command| commands::wiki::register(command));
-            commands.create_application_command(|command| commands::eval::register(command))
+            commands.create_application_command(|command| commands::eval::register(command));
+            commands.create_application_command(|command| commands::todo::register(command));
+            commands.create_application_command(
+                |command: &mut serenity::builder::CreateApplicationCommand| {
+                    commands::todo::register(command)
+                },
+            )
         })
         .await;
     }
