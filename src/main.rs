@@ -4,6 +4,7 @@ use std::env;
 
 use serenity::framework::standard::macros::group;
 use serenity::framework::StandardFramework;
+use serenity::model::prelude::interaction::InteractionResponseType;
 use serenity::prelude::*;
 
 use crate::commands::cat::CAT_COMMAND;
@@ -14,7 +15,6 @@ use crate::commands::github_trend::GITHUB_TREND_COMMAND;
 use crate::commands::image::IMAGE_COMMAND;
 use crate::commands::random::RANDOM_COMMAND;
 use crate::commands::todo::TODO_COMMAND;
-use crate::commands::wiki::WIKI_COMMAND;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
@@ -141,10 +141,33 @@ impl EventHandler for Handler {
         }
     }
 
-    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {}
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::ApplicationCommand(command) = interaction {
+            let content = match command.data.name.as_str() {
+                "wiki" => commands::wiki::run(&command.data.options).await,
+                _ => "not implemented :(".to_string(),
+            };
 
-    async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
+            if let Err(why) = command
+                .create_interaction_response(&ctx.http, |response| {
+                    response
+                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|message| message.content(content))
+                })
+                .await
+            {
+                println!("Cannot respond to slash command: {}", why);
+            }
+        }
+    }
+
+    async fn ready(&self, ctx: Context, _: Ready) {
+        let guild_id = GuildId(889012300705591307);
+
+        let _ = GuildId::set_application_commands(&guild_id, &ctx.http, |commands| {
+            commands.create_application_command(|command| commands::wiki::register(command))
+        })
+        .await;
     }
 }
 
