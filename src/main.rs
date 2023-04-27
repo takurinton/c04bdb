@@ -137,7 +137,7 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
             let content = match command.data.name.as_str() {
-                "wiki" => commands::random::run(&command.data.options),
+                "random" => commands::random::run(&command.data.options),
                 "friday" => commands::friday::run(&command.data.options),
                 "cat" => commands::cat::run(&command.data.options),
                 "wiki" => commands::wiki::run(&command.data.options).await,
@@ -172,15 +172,11 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::eval::register(command));
             commands.create_application_command(|command| commands::todo::register(command));
             commands.create_application_command(|command| commands::image::register(command));
-            commands
-                .create_application_command(|command| commands::github_trend::register(command));
-            commands.create_application_command(
-                |command: &mut serenity::builder::CreateApplicationCommand| {
-                    commands::todo::register(command)
-                },
-            )
+            commands.create_application_command(|command| commands::github_trend::register(command))
         })
         .await;
+
+        println!("connected!");
     }
 }
 
