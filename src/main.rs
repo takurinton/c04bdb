@@ -11,8 +11,6 @@ use crate::commands::cat::CAT_COMMAND;
 use crate::commands::chatgpt::CHATGPT_COMMAND;
 use crate::commands::friday::FRIDAY_COMMAND;
 use crate::commands::github_trend::GITHUB_TREND_COMMAND;
-use crate::commands::image::IMAGE_COMMAND;
-use crate::commands::random::RANDOM_COMMAND;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
