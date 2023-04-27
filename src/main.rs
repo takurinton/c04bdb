@@ -146,6 +146,7 @@ impl EventHandler for Handler {
                 "wiki" => commands::wiki::run(&command.data.options).await,
                 "eval" => commands::eval::run(&command.data.options).await,
                 "todo" => commands::eval::run(&command.data.options).await,
+                "image" => commands::image::run(&command.data.options).await,
                 _ => "not implemented :(".to_string(),
             };
 
@@ -170,6 +171,7 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::wiki::register(command));
             commands.create_application_command(|command| commands::eval::register(command));
             commands.create_application_command(|command| commands::todo::register(command));
+            commands.create_application_command(|command| commands::image::register(command));
             commands.create_application_command(
                 |command: &mut serenity::builder::CreateApplicationCommand| {
                     commands::todo::register(command)
