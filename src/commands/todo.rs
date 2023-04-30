@@ -43,7 +43,7 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
         None => "",
     };
 
-    let db_channel_id = match env::var("DISCORD_DB_CHANNEL_ID")
+    let db_channel_id = match env::var("DISCORD_DB_CHANNEL_ID_RINTON_BOT")
         .expect("search engine id is not defined")
         .parse::<u64>()
     {
