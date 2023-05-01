@@ -50,7 +50,7 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
         Ok(db_channel_id) => db_channel_id,
         Err(_) => return "DBチャンネルのIDが見つかりません。".to_string(),
     };
-    let guild_id = GuildId(804003874037563402);
+    let guild_id = GuildId(889012300705591307);
 
     let channels = match guild_id.channels(&ctx.http).await {
         Ok(channel) => channel,
