@@ -145,6 +145,7 @@ impl EventHandler for Handler {
                 "todo" => commands::todo::run(&command.data.options, &ctx).await,
                 "image" => commands::image::run(&command.data.options).await,
                 "github_trend" => commands::github_trend::run(&command, &ctx).await,
+                "mdn" => commands::mdn::run(&command.data.options).await,
                 _ => "not implemented :(".to_string(),
             };
 
@@ -172,7 +173,9 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::eval::register(command));
             commands.create_application_command(|command| commands::todo::register(command));
             commands.create_application_command(|command| commands::image::register(command));
-            commands.create_application_command(|command| commands::github_trend::register(command))
+            commands
+                .create_application_command(|command| commands::github_trend::register(command));
+            commands.create_application_command(|command| commands::mdn::register(command))
         })
         .await;
 
