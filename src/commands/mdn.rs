@@ -1,11 +1,10 @@
-use reqwest;
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::command::CommandOptionType;
 use serenity::model::prelude::interaction::application_command::{
     CommandDataOption, CommandDataOptionValue,
 };
 
-use std::env;
+use crate::commands::utils::google_search;
 
 pub async fn run(options: &[CommandDataOption]) -> String {
     let text = match options.get(0) {
@@ -19,40 +18,18 @@ pub async fn run(options: &[CommandDataOption]) -> String {
         None => return "クエリが見つかりませんでした。".to_string(),
     };
 
-    let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
-    let api_key = env::var("API_KEY").expect("api key is not defined");
-    let url = format!(
-        "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja&q={}+site:developer.mozilla.org",
-        text
-    );
-    let result = match reqwest::get(&url).await {
-        Ok(result) => result,
-        Err(_) => {
-            return "Google 検索でエラーが発生しました。".to_string();
-        }
-    };
-    let body = match result.json::<serde_json::Value>().await {
-        Ok(body) => body,
-        Err(_) => {
-            return "Google 検索でエラーが発生しました。".to_string();
-        }
-    };
-    let items = match body["items"].as_array() {
-        Some(items) => items,
-        None => {
-            return "検索結果がありません。".to_string();
-        }
+    let items = match google_search(text, "", "developer.mozilla.org").await {
+        Ok(items) => items,
+        Err(err) => return err,
     };
 
-    let url = match items.iter().find(|item| {
-        item["link"]
-            .as_str()
-            .unwrap()
-            .contains("developer.mozilla.org/ja")
-    }) {
-        Some(item) => item["link"].as_str().unwrap().to_string(),
+    let url = match items
+        .iter()
+        .find(|item| item.link.as_str().contains("developer.mozilla.org/ja"))
+    {
+        Some(item) => item.link.as_str().to_string(),
         None => match items.get(0) {
-            Some(item) => item["link"].as_str().unwrap().to_string(),
+            Some(item) => item.link.as_str().to_string(),
             None => {
                 return "検索結果が見つかりませんでした。".to_string();
             }
