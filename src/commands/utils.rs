@@ -10,9 +10,8 @@ pub struct GoogleItem {
     pub link: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct GoogleResponse {
-    status: String,
     pub items: Option<Vec<GoogleItem>>,
 }
 
@@ -34,25 +33,22 @@ pub async fn google_search(
     let url = format!(
     "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={q}+site:{site}");
 
-    println!("{}", url);
-
     let result = match reqwest::get(&url).await {
-        Ok(result) => result,
-        Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),
-    };
-    let body = match result.json::<GoogleResponse>().await {
-        Ok(body) => {
-            if body.status == "200" {
-                body
+        Ok(result) => {
+            if result.status() == reqwest::StatusCode::OK {
+                result
             } else {
                 return Err(format!(
                     "Google 検索でエラーが発生しました。ステータスコード: {}",
-                    body.status
-                )
-                .to_string());
+                    result.status()
+                ));
             }
         }
         Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),
+    };
+    let body = match result.json::<GoogleResponse>().await {
+        Ok(body) => body,
+        Err(_) => return Err("jsonのparseに失敗しました。".to_string()),
     };
     let items = match body.items {
         Some(items) => items,
