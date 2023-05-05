@@ -28,10 +28,15 @@ pub async fn google_search(
     } else {
         "".to_string()
     };
+    let site = if site == "" {
+        "".to_string()
+    } else {
+        format!("+site:{site}", site = site)
+    };
     let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
     let api_key = env::var("API_KEY").expect("api key is not defined");
     let url = format!(
-    "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={q}+site:{site}");
+    "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={q}{site}");
 
     let result = match reqwest::get(&url).await {
         Ok(result) => {
