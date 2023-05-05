@@ -40,7 +40,7 @@ pub async fn run(options: &[CommandDataOption]) -> String {
     let items = match body["items"].as_array() {
         Some(items) => items,
         None => {
-            return "Google 検索でエラーが発生しました。".to_string();
+            return "検索結果がありません。".to_string();
         }
     };
 
