@@ -1,10 +1,10 @@
-use std::env;
-
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::command::CommandOptionType;
 use serenity::model::prelude::interaction::application_command::{
     CommandDataOption, CommandDataOptionValue,
 };
+
+use crate::commands::utils::google_search;
 
 pub async fn run(options: &[CommandDataOption]) -> String {
     let text = match options.get(0) {
@@ -18,33 +18,19 @@ pub async fn run(options: &[CommandDataOption]) -> String {
         None => return "クエリが見つかりませんでした。".to_string(),
     };
 
-    let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
-    let api_key = env::var("API_KEY").expect("api key is not defined");
-    let url = format!("https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&searchType=image&hl=ja&q={}", text);
-    let result = match reqwest::get(&url).await {
-        Ok(result) => result,
-        Err(_) => return "画像が見つかりませんでした。".to_string(),
-    };
-    let body = match result.json::<serde_json::Value>().await {
-        Ok(body) => body,
-        Err(_) => return "画像が見つかりませんでした。".to_string(),
-    };
-    let items = match body["items"].as_array() {
-        Some(items) => items,
-        None => return "画像が見つかりませんでした。".to_string(),
+    let items = match google_search(text, "image", "").await {
+        Ok(items) => items,
+        Err(err) => return err,
     };
     let length = items.len();
     let random = rand::random::<usize>() % length;
     let item = &items[random];
-    let link = match item["link"].as_str() {
-        Some(link) => link,
-        None => return "画像が見つかりませんでした。".to_string(),
-    };
 
     format!(
         "検索クエリ:{}
 {}",
-        text, link
+        text,
+        item.link.clone()
     )
 }
 

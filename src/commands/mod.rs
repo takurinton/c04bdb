@@ -7,4 +7,5 @@ pub mod image;
 pub mod mdn;
 pub mod random;
 pub mod todo;
+pub mod utils;
 pub mod wiki;
