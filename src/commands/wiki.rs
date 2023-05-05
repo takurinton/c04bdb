@@ -1,13 +1,12 @@
 use reqwest;
+use serde::Deserialize;
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::command::CommandOptionType;
 use serenity::model::prelude::interaction::application_command::{
     CommandDataOption, CommandDataOptionValue,
 };
 
-use std::env;
-
-use serde::Deserialize;
+use crate::commands::utils::google_search;
 
 #[derive(Deserialize)]
 struct Pages {
@@ -70,42 +69,17 @@ pub async fn run(options: &[CommandDataOption]) -> String {
         None => return "クエリが見つかりませんでした。".to_string(),
     };
 
-    let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
-    let api_key = env::var("API_KEY").expect("api key is not defined");
-    let url = format!(
-        "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja&q={}+site:ja.wikipedia.org",
-        text
-    );
-    let result = match reqwest::get(&url).await {
-        Ok(result) => result,
-        Err(_) => {
-            return "Google 検索でエラーが発生しました。".to_string();
-        }
-    };
-    let body = match result.json::<serde_json::Value>().await {
-        Ok(body) => body,
-        Err(_) => {
-            return "Google 検索でエラーが発生しました。".to_string();
-        }
-    };
-    let items = match body["items"].as_array() {
-        Some(items) => items,
-        None => {
-            return "Google 検索でエラーが発生しました。".to_string();
-        }
+    let items = match google_search(text, "web", "ja.wikipedia.org").await {
+        Ok(items) => items,
+        Err(err) => return err,
     };
 
-    let wikipedia = match items.iter().find(|item| match item["link"].as_str() {
-        Some(link) => link.starts_with("https://ja.wikipedia.org/wiki/"),
-        None => false,
+    let wikipedia = match items.iter().find(|item| match item.link.as_str() {
+        link if link.starts_with("https://ja.wikipedia.org/wiki/") => true,
+        _ => false,
     }) {
-        Some(item) => match item["link"].as_str() {
-            Some(link) => link,
-            None => return "wikipedia の取得に失敗しました。".to_string(),
-        },
-        None => {
-            return "そのような項目はありません。".to_string();
-        }
+        Some(item) => item.link.clone(),
+        None => return "wikipedia の検索に失敗しました。".to_string(),
     };
 
     let text = wikipedia.replace("https://ja.wikipedia.org/wiki/", "");
