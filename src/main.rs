@@ -47,7 +47,7 @@ impl EventHandler for Handler {
         }
 
         // https://github.com/{owner}/repo/path
-        let re = match regex::Regex::new(r"https://github.com/\w+/\w+/blob/[\w/]+/\w+\.\w+") {
+        let re = match regex::Regex::new(r"https://github.com/\w+/\w+/blob/[\w/]+/([\w.-]+)") {
             Ok(re) => re,
             Err(_) => return,
         };
