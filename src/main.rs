@@ -46,6 +46,73 @@ impl EventHandler for Handler {
             }
         }
 
+        // https://github.com/{owner}/repo/path
+        let re = match regex::Regex::new(r"https://github.com/\w+/\w+/blob/[\w/]+/\w+\.\w+") {
+            Ok(re) => re,
+            Err(_) => return,
+        };
+        let replaced = re.replace_all(content, "$0 ");
+        let matches = replaced
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        if matches.len() > 0 {
+            for content in matches {
+                let owner = match content.split("/").nth(3) {
+                    Some(owner) => owner,
+                    None => return,
+                };
+                let repo = match content.split("/").nth(4) {
+                    Some(repo) => repo,
+                    None => return,
+                };
+                let path = if let Some(rest) = content.splitn(2, "blob/").nth(1) {
+                    rest
+                } else if let Some(rest) = content.splitn(2, "tree/").nth(1) {
+                    rest
+                } else {
+                    ""
+                }
+                .splitn(2, '/')
+                .nth(1)
+                .unwrap_or_default();
+                println!("path: {}", path);
+                let branch = match content.split("/").nth(6) {
+                    Some(branch) => branch,
+                    None => return,
+                };
+                let extension = match content.split(".").last() {
+                    Some(extension) => extension,
+                    None => return,
+                };
+
+                let url =
+                    format!("https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}");
+
+                let res = reqwest::get(&url).await;
+                if let Ok(res) = res {
+                    if let Ok(text) = res.text().await {
+                        if let Err(why) = msg
+                            .channel_id
+                            .say(
+                                &ctx.http,
+                                format!(
+                                    "
+```{extension}
+{}
+```",
+                                    text
+                                ),
+                            )
+                            .await
+                        {
+                            println!("Error sending message: {:?}", why);
+                        }
+                    }
+                }
+            }
+        }
+
         // discord message url
         let re = match regex::Regex::new(r"https://discord.com/channels/\d+/\d+/\d+") {
             Ok(re) => re,
