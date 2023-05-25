@@ -76,7 +76,7 @@ impl EventHandler for Handler {
                 .splitn(2, '/')
                 .nth(1)
                 .unwrap_or_default();
-                println!("path: {}", path);
+
                 let branch = match content.split("/").nth(6) {
                     Some(branch) => branch,
                     None => return,
@@ -92,20 +92,27 @@ impl EventHandler for Handler {
                 let res = reqwest::get(&url).await;
                 if let Ok(res) = res {
                     if let Ok(text) = res.text().await {
-                        if let Err(why) = msg
-                            .channel_id
-                            .say(
-                                &ctx.http,
-                                format!(
-                                    "
+                        let res = if text.len() > 1500 {
+                            let t = &text[..1500];
+                            format!(
+                                "
+```{extension}
+{}
+```
+文字数が多いので省略されています、全文はこちら: {}
+",
+                                t, url
+                            )
+                        } else {
+                            format!(
+                                "
 ```{extension}
 {}
 ```",
-                                    text
-                                ),
+                                text,
                             )
-                            .await
-                        {
+                        };
+                        if let Err(why) = msg.channel_id.say(&ctx.http, res).await {
                             println!("Error sending message: {:?}", why);
                         }
                     }
