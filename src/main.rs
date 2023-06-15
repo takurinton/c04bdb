@@ -47,7 +47,9 @@ impl EventHandler for Handler {
         }
 
         // discord message url
-        let re = match regex::Regex::new(r"https://discord.com/channels/\d+/\d+/\d+") {
+        let re = match regex::Regex::new(
+            r"https://(?:discord\.com|discordapp\.com)/channels/\d+/\d+/\d+",
+        ) {
             Ok(re) => re,
             Err(_) => return,
         };
