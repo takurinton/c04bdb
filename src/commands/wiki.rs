@@ -26,7 +26,7 @@ struct Response {
 }
 
 pub async fn run(options: &[CommandDataOption]) -> String {
-    let text = match options.get(0) {
+    let search_text = match options.get(0) {
         Some(option) => match &option.resolved {
             Some(value) => match value {
                 CommandDataOptionValue::String(text) => text,
@@ -37,7 +37,7 @@ pub async fn run(options: &[CommandDataOption]) -> String {
         None => return "クエリが見つかりませんでした。".to_string(),
     };
 
-    let items = match google_search(text, "web", "ja.wikipedia.org").await {
+    let items = match google_search(search_text, "web", "ja.wikipedia.org").await {
         Ok(items) => items,
         Err(err) => return err,
     };
@@ -68,8 +68,10 @@ pub async fn run(options: &[CommandDataOption]) -> String {
 
     let res = format!(
         "検索クエリ: {}
+検索結果: {}
 {}
 https://ja.wikipedia.org/wiki/{}",
+        search_text,
         percent_decode(text.as_str()),
         response.query.pages.iter().next().unwrap().1.extract,
         response.query.pages.iter().next().unwrap().1.title
