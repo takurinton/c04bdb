@@ -1,13 +1,11 @@
 mod commands;
+mod utils;
 
 use std::env;
 
-use serenity::framework::standard::macros::group;
 use serenity::framework::StandardFramework;
 use serenity::model::prelude::interaction::InteractionResponseType;
 use serenity::prelude::*;
-
-use crate::commands::chatgpt::CHATGPT_COMMAND;
 
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
@@ -16,9 +14,7 @@ use serenity::model::gateway::Ready;
 use serenity::model::prelude::{ChannelId, GuildId};
 use serenity::utils::colours;
 
-#[group]
-#[commands(chatgpt)]
-struct General;
+use utils::utils::fetch_chatgpt;
 
 pub struct Handler;
 
@@ -32,14 +28,24 @@ impl EventHandler for Handler {
             None => return,
         };
 
-        // health check
         let mentions = msg.mentions;
         if mentions.len() > 0 {
             let bot_id = "1097033145674649675";
 
             for mention in mentions {
                 if mention.id.0.to_string() == bot_id {
-                    if let Err(why) = msg.channel_id.say(&ctx.http, "なんや").await {
+                    let text = match regex::Regex::new(r"<@!\d+>").unwrap() {
+                        re => re.replace_all(content, ""),
+                    }
+                    .replace("\n", " ");
+
+                    let typing = msg.channel_id.start_typing(&ctx.http).unwrap();
+
+                    let response = fetch_chatgpt(text).await;
+
+                    let _ = typing.stop();
+
+                    if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
                         println!("Error sending message: {:?}", why);
                     }
                 }
@@ -192,9 +198,7 @@ async fn main() {
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
-    let framework = StandardFramework::new()
-        .configure(|c| c.prefix("/"))
-        .group(&GENERAL_GROUP);
+    let framework = StandardFramework::new();
 
     let mut client = Client::builder(&token, intents)
         .framework(framework)

@@ -1,5 +1,4 @@
 pub mod cat;
-pub mod chatgpt;
 pub mod eval;
 pub mod friday;
 pub mod github_trend;
