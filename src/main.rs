@@ -154,6 +154,7 @@ impl EventHandler for Handler {
                 "image" => commands::image::run(&command.data.options).await,
                 "github_trend" => commands::github_trend::run(&command, &ctx).await,
                 "mdn" => commands::mdn::run(&command.data.options).await,
+                "levenshtein" => commands::levenshtein::run(&command.data.options),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -183,7 +184,8 @@ impl EventHandler for Handler {
             commands.create_application_command(|command| commands::image::register(command));
             commands
                 .create_application_command(|command| commands::github_trend::register(command));
-            commands.create_application_command(|command| commands::mdn::register(command))
+            commands.create_application_command(|command| commands::mdn::register(command));
+            commands.create_application_command(|command| commands::levenshtein::register(command))
         })
         .await;
 
