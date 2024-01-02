@@ -66,7 +66,9 @@ pub fn run(options: &[CommandDataOption]) -> String {
         None => return "b が不正です".to_string(),
     };
 
-    levenshtein(a, b).to_string()
+    let distance = levenshtein(a, b);
+
+    format!("{} と {} の距離は {} です。", a, b, distance)
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
