@@ -6,7 +6,7 @@ use serenity::model::prelude::interaction::application_command::{
     CommandDataOption, CommandDataOptionValue,
 };
 
-use crate::commands::utils::{google_search, percent_decode};
+use crate::utils::utils::{google_search, percent_decode};
 
 #[derive(Deserialize)]
 struct Pages {

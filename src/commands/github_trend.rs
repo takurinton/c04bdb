@@ -5,7 +5,7 @@ use serenity::model::prelude::interaction::application_command::{
 };
 use serenity::prelude::*;
 
-use crate::commands::utils::github_search;
+use crate::utils::utils::github_search;
 
 pub async fn run(command: &ApplicationCommandInteraction, ctx: &Context) -> String {
     let options = &command.data.options;

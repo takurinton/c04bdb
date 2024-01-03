@@ -7,5 +7,4 @@ pub mod levenshtein;
 pub mod mdn;
 pub mod random;
 pub mod todo;
-pub mod utils;
 pub mod wiki;
