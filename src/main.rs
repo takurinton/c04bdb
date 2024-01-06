@@ -155,6 +155,7 @@ impl EventHandler for Handler {
                 "github_trend" => commands::github_trend::run(&command, &ctx).await,
                 "mdn" => commands::mdn::run(&command.data.options).await,
                 "levenshtein" => commands::levenshtein::run(&command.data.options),
+                "line" => commands::line::run(&command.data.options),
                 _ => "not implemented :(".to_string(),
             };
 
@@ -185,7 +186,8 @@ impl EventHandler for Handler {
             commands
                 .create_application_command(|command| commands::github_trend::register(command));
             commands.create_application_command(|command| commands::mdn::register(command));
-            commands.create_application_command(|command| commands::levenshtein::register(command))
+            commands.create_application_command(|command| commands::levenshtein::register(command));
+            commands.create_application_command(|command| commands::line::register(command))
         })
         .await;
 

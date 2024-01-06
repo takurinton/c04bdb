@@ -4,6 +4,7 @@ pub mod friday;
 pub mod github_trend;
 pub mod image;
 pub mod levenshtein;
+pub mod line;
 pub mod mdn;
 pub mod random;
 pub mod todo;
