@@ -8,7 +8,7 @@ use serenity::model::prelude::interaction::application_command::{
 
 use serenity::prelude::Context;
 
-use crate::utils::utils::get_db_channel;
+use crate::utils::get_db_channel::get_db_channel;
 
 pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
     let operation = match options.iter().find(|option| option.name == "operation") {

@@ -4,7 +4,7 @@ use serenity::model::prelude::interaction::application_command::{
     CommandDataOption, CommandDataOptionValue,
 };
 
-use crate::utils::utils::google_search;
+use crate::utils::google_search::google_search;
 
 pub async fn run(options: &[CommandDataOption]) -> String {
     let text = match options.get(0) {
