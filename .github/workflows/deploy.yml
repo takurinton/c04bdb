@@ -13,6 +13,9 @@ jobs:
       - name: Build
         run: cargo build --release
 
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
       - name: Deploy
         run: railway up
         env:
