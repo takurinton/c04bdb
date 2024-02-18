@@ -67,7 +67,7 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
                 Ok(_) => "",
                 Err(_) => return "リンクの登録に失敗しました。".to_string(),
             };
-            
+
             return format!("{} を追加しました。", link);
         }
         "rm" => {
