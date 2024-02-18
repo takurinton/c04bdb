@@ -2,7 +2,7 @@ name: Deploy to Railway
 
 on:
   schedule:
-    - cron: "*/30 0 * * *"
+    - cron: "*/30 * * * *"
 
 jobs:
   build:
