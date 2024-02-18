@@ -1,7 +1,8 @@
 name: Deploy to Railway
 
 on:
-  push:
+  schedule:
+    - cron: "*/30 0 * * *"
 
 jobs:
   build:
