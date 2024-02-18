@@ -1,8 +1,8 @@
-use serenity::prelude::*;
 use serenity::async_trait;
 use serenity::model::application::interaction::Interaction;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
+use serenity::prelude::*;
 
 mod interaction_create_handler;
 mod message_handler;
