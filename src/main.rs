@@ -202,7 +202,7 @@ impl EventHandler for Handler {
         };
 
         // channel に post
-        let channel = ChannelId(1098357960041824436);
+        let channel = ChannelId(1208611584964825099);
         for feed in feeds {
             let _ = channel
                 .send_message(&ctx.http, |m| {
@@ -248,7 +248,7 @@ impl EventHandler for Handler {
 
         // rss_last_date prefix がついているメッセージを削除
         let messages = db_channel
-            .messages(&ctx.http, |retriever| retriever.limit(100))
+            .messages(&ctx.http, |retriever| retriever.limit(1))
             .await
             .unwrap()
             .into_iter()
