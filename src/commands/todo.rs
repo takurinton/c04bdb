@@ -1,13 +1,14 @@
 extern crate rand;
-use std::env;
 
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::command::CommandOptionType;
 use serenity::model::prelude::interaction::application_command::{
     CommandDataOption, CommandDataOptionValue,
 };
-use serenity::model::prelude::{ChannelId, GuildId};
+
 use serenity::prelude::Context;
+
+use crate::utils::utils::get_db_channel;
 
 pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
     let operation = match options.iter().find(|option| option.name == "operation") {
@@ -43,22 +44,9 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
         None => "",
     };
 
-    let db_channel_id = match env::var("DISCORD_DB_CHANNEL_ID_RINTON_BOT")
-        .expect("search engine id is not defined")
-        .parse::<u64>()
-    {
-        Ok(db_channel_id) => db_channel_id,
-        Err(_) => return "DBチャンネルのIDが見つかりません。".to_string(),
-    };
-    let guild_id = GuildId(889012300705591307);
-
-    let channels = match guild_id.channels(&ctx.http).await {
-        Ok(channel) => channel,
-        Err(_) => return "チャンネル一覧の取得に失敗しました".to_string(),
-    };
-    let db_channel = match channels.get(&ChannelId(db_channel_id)) {
-        Some(channel) => channel,
-        None => return "DBチャンネルが見つかりません。".to_string(),
+    let db_channel = match get_db_channel(ctx).await {
+        Ok(db_channel) => db_channel,
+        Err(why) => return why.to_string(),
     };
 
     let messages = match db_channel
@@ -94,7 +82,8 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
                 }
             };
 
-            let _ = match ChannelId(db_channel_id)
+            let _ = match db_channel
+                .id
                 .say(&ctx.http, format!("todo_message {} {}", id, todo_message))
                 .await
             {
@@ -112,7 +101,8 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
             }) {
                 Some(index) => {
                     let todo_message_id = messages[index].id;
-                    match ChannelId(db_channel_id)
+                    match db_channel
+                        .id
                         .delete_message(&ctx.http, todo_message_id)
                         .await
                     {
@@ -155,7 +145,8 @@ pub async fn run(options: &[CommandDataOption], ctx: &Context) -> String {
             }) {
                 Some(index) => {
                     let todo_message_id = messages[index].id;
-                    let _ = match ChannelId(db_channel_id)
+                    let _ = match db_channel
+                        .id
                         .edit_message(&ctx.http, todo_message_id, |m| {
                             m.content(format!("todo_message {} {}", todo_id, todo_message))
                         })
