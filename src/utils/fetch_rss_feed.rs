@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime};
 use reqwest;
 use rss::{Channel, Item};
 use serenity::client::Context;
@@ -102,17 +102,17 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
                 Some(date) => date,
                 None => "",
             };
-            let date = match NaiveDateTime::parse_from_str(&date, "%a, %d %b %Y %H:%M:%S %Z") {
+            let date = match DateTime::parse_from_rfc2822(date) {
                 Ok(date) => date,
                 Err(_) => {
-                    // 形式が正しくなかったら除外するために 1970年1月1日を "%a, %d %b %Y %H:%M:%S %Z" の形式で parse する
-                    NaiveDateTime::parse_from_str(
-                        "Sun, 01 Jan 1970 00:00:00 GMT",
-                        "%a, %d %b %Y %H:%M:%S %Z",
-                    )?
+                    // 形式が正しくなかったら除外するために 1970年1月1日を GMT 形式で DateTime に parse して返す
+                    DateTime::parse_from_rfc2822("Thu, 01 Jan 1970 00:00:00 GMT")?
                 }
             };
-            if date > last_date {
+            
+            if date.naive_utc() > last_date {
+                // MEMO: たまに動かないのでログ仕込んでおく
+                println!("last_date: {:?}, item.title: {:?}, item.pub_date: {:?}", last_date, item.title, date);
                 items.push(item.clone());
             }
         }
