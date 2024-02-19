@@ -4,7 +4,6 @@ use crate::utils::get_db_channel::get_db_channel;
 use serenity::{
     client::Context,
     model::id::{ChannelId, GuildId},
-    utils::colours,
 };
 
 pub async fn ready(ctx: Context) {
@@ -37,44 +36,16 @@ pub async fn ready(ctx: Context) {
     // channel に post
     let channel = ChannelId(1208611584964825099);
     for feed in feeds {
-        let _ = channel
-            .send_message(&ctx.http, |m| {
-                m.embed(|e| {
-                    e.title(match &feed.title {
-                        Some(title) => title,
-                        None => "タイトルなし",
-                    });
-                    e.url(match &feed.link {
-                        Some(link) => link,
-                        None => "",
-                    });
-                    e.description(match &feed.description {
-                        Some(description) => description,
-                        None => "",
-                    });
-                    // e.timestamp(match &feed.pub_date {
-                    //     Some(pub_date) => {
-                    //         println!("{:?}", pub_date);
-                    //         let pub_date = match NaiveDateTime::parse_from_str(pub_date, "%a, %d %b %Y %H:%M:%S %Z") {
-                    //             Ok(date) => date,
-                    //             Err(why) => {
-                    //                 println!("Error parsing date: {:?}", why);
-                    //                 chrono::Utc::now().naive_utc()
-                    //             }
-                    //         };
-                    //         pub_date.to_string()
-                    //     },
-                    //     None => {
-                    //         let now = chrono::Utc::now();
-                    //         now.naive_utc().to_string()
-                    //     }
-                    // });
-                    e.color(colours::branding::BLURPLE);
-                    e
-                });
-                m
-            })
-            .await;
+        let _ = match feed.link {
+            // link が存在したらそのまま送信する
+            Some(link) => {
+                let _ = channel.send_message(&ctx.http, |m| m.content(link)).await;
+            }
+            // 何もなかったら何もしない
+            None => {
+                println!("link がありません");
+            }
+        };
     }
 
     let db_channel = get_db_channel(&ctx).await.unwrap();

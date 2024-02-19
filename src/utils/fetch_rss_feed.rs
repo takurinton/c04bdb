@@ -109,10 +109,13 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
                     DateTime::parse_from_rfc2822("Thu, 01 Jan 1970 00:00:00 GMT")?
                 }
             };
-            
+
             if date.naive_utc() > last_date {
                 // MEMO: たまに動かないのでログ仕込んでおく
-                println!("last_date: {:?}, item.title: {:?}, item.pub_date: {:?}", last_date, item.title, date);
+                println!(
+                    "last_date: {:?}, item.title: {:?}, item.pub_date: {:?}",
+                    last_date, item.title, date
+                );
                 items.push(item.clone());
             }
         }
