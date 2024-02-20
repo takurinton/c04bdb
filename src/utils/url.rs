@@ -172,4 +172,13 @@ mod tests {
         assert_eq!(url.query, None);
         assert_eq!(url.fragment, None);
     }
+
+    #[test]
+    fn test_query_pairs() {
+        let url = Url::parse("https://example.com/path/to/somewhere?foo=bar&baz=qux");
+        let pairs = url.query_pairs();
+        assert_eq!(pairs.len(), 2);
+        assert_eq!(pairs[0], ("foo".to_string(), "bar".to_string()));
+        assert_eq!(pairs[1], ("baz".to_string(), "qux".to_string()));
+    }
 }
