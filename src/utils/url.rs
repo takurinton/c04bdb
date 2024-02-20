@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub struct Url {
     scheme: String,
     user_info: Option<String>,
@@ -9,7 +11,7 @@ pub struct Url {
 }
 
 impl Url {
-    fn parse(url: &str) -> Self {
+    pub fn parse(url: &str) -> Self {
         let mut url_parts = url.splitn(2, "://");
         let scheme = url_parts.next().unwrap().to_string();
         let rest = url_parts.next().unwrap_or("");
@@ -63,15 +65,15 @@ impl Url {
         }
     }
 
+    // TODO: 分割する
     pub fn to_string(&self) -> String {
-        let mut url = format!("{}://", self.scheme);
+        // let mut url = format!("{}://", self.scheme);
+        let mut url = "".to_string();
         if let Some(user_info) = &self.user_info {
             url.push_str(&format!("{}@", user_info));
         }
         url.push_str(&self.domain);
-        if let Some(port) = self.port {
-            url.push_str(&format!(":{}", port));
-        }
+        url.push_str(&format!(":{}", self.port.unwrap_or(443)));
         url.push_str(&self.path);
         if let Some(query) = &self.query {
             url.push_str(&format!("?{}", query));
@@ -102,17 +104,18 @@ impl Url {
         self.fragment.clone()
     }
 
-    pub fn query_pairs(&self) -> Vec<(String, String)> {
+    pub fn query_pairs(&self) -> HashMap<String, String> {
         let mut pairs = Vec::new();
         if let Some(query) = &self.query {
             for pair in query.split('&') {
-                let mut pair_parts = pair.splitn(2, '=');
-                let key = pair_parts.next().unwrap().to_string();
-                let value = pair_parts.next().unwrap().to_string();
+                let mut pair = pair.splitn(2, '=');
+                let key = pair.next().unwrap_or("").to_string();
+                let value = pair.next().unwrap_or("").to_string();
                 pairs.push((key, value));
             }
         }
-        pairs
+
+        pairs.into_iter().collect()
     }
 }
 
@@ -183,7 +186,7 @@ mod tests {
         let url = Url::parse("https://example.com/path/to/somewhere?foo=bar&baz=qux");
         let pairs = url.query_pairs();
         assert_eq!(pairs.len(), 2);
-        assert_eq!(pairs[0], ("foo".to_string(), "bar".to_string()));
-        assert_eq!(pairs[1], ("baz".to_string(), "qux".to_string()));
+        assert_eq!(pairs.get("foo"), Some(&"bar".to_string()));
+        assert_eq!(pairs.get("baz"), Some(&"qux".to_string()));
     }
 }

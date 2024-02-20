@@ -1,13 +1,12 @@
-// http client のフルスクラッチ実装
-
+use chrono::format;
 use std::collections::HashMap;
-use std::io::Read;
-use std::io::Write;
-use std::net::TcpStream;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
 
 use crate::utils::url::Url;
 
 pub struct HttpClient {
+    pub url: Url,
     pub host: String,
     pub port: u16,
     pub path: String,
@@ -15,154 +14,116 @@ pub struct HttpClient {
     pub headers: HashMap<String, String>,
 }
 
+pub struct HttpResponse {
+    pub status_code: u16,
+    pub headers: HashMap<String, String>,
+    pub body: String,
+}
+
+/**
+ * @todo 無限に抽象化できる
+ */
 impl HttpClient {
-    pub fn new(host: &str, port: u16, path: &str) -> HttpClient {
-        HttpClient {
-            host: host.to_string(),
+    fn default_headers() -> HashMap<String, String> {
+        let mut headers = HashMap::new();
+        headers.insert("User-Agent".to_string(), "Rust".to_string());
+        headers.insert("Accept".to_string(), "*/*".to_string());
+        headers
+    }
+
+    pub fn new(url: &str, headers: HashMap<String, String>) -> Self {
+        let url = Url::parse(url);
+        let host = url.host();
+        let port = url.port();
+        let path = url.path();
+        let headers = headers
+            .into_iter()
+            .chain(Self::default_headers().into_iter())
+            .collect();
+        let query = url.query_pairs();
+
+        Self {
+            url,
+            host,
             port,
-            path: path.to_string(),
-            query: HashMap::new(),
-            headers: HashMap::new(),
+            path,
+            query,
+            headers,
         }
     }
 
-    pub fn add_query(&mut self, key: &str, value: &str) {
-        self.query.insert(key.to_string(), value.to_string());
-    }
+    pub async fn get(&self) -> Result<HttpResponse, std::io::Error> {
+        println!("url: {}", self.url.to_string());
+        // let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).await?;
+        let mut stream = match TcpStream::connect(format!("{}:{}", self.host, self.port)).await {
+            Ok(stream) => stream,
+            Err(e) => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Failed to connect: {}", e),
+                ))
+            }
+        };
 
-    pub fn add_header(&mut self, key: &str, value: &str) {
-        self.headers.insert(key.to_string(), value.to_string());
-    }
-
-    pub fn get(&self) -> String {
-        let mut query_string = String::new();
-        for (key, value) in &self.query {
-            query_string.push_str(&format!("{}={}&", key, value));
-        }
-        let query_string = query_string.trim_end_matches('&');
-
-        let mut headers = String::new();
-        for (key, value) in &self.headers {
-            headers.push_str(&format!("{}: {}\r\n", key, value));
-        }
+        println!("Connected to the server");
 
         let request = format!(
-            "GET {}?{} HTTP/1.1\r\nHost: {}\r\n{}\r\n",
-            self.path, query_string, self.host, headers
+            "GET {} HTTP/1.1\r\nHost: {}\r\n",
+            self.path, self.host
         );
 
-        let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).unwrap();
-        stream.write(request.as_bytes()).unwrap();
-
-        let mut response = String::new();
-        stream.read_to_string(&mut response).unwrap();
-
-        response
-    }
-
-    pub fn post(&self, body: &str) -> String {
-        let mut query_string = String::new();
-        for (key, value) in &self.query {
-            query_string.push_str(&format!("{}={}&", key, value));
-        }
-        let query_string = query_string.trim_end_matches('&');
-
-        let mut headers = String::new();
+        let mut request_headers = String::new();
         for (key, value) in &self.headers {
-            headers.push_str(&format!("{}: {}\r\n", key, value));
+            request_headers.push_str(&format!("{}: {}\r\n", key, value));
         }
 
-        let request = format!(
-            "POST {}?{} HTTP/1.1\r\nHost: {}\r\n{}\r\n{}\r\n",
-            self.path, query_string, self.host, headers, body
-        );
+        println!("request: {}", request);
 
-        let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).unwrap();
-        stream.write(request.as_bytes()).unwrap();
+        let request = format!("{}\r\n{}", request, request_headers);
+        stream.write_all(request.as_bytes()).await?;
+
+        println!("Sent the request");
 
         let mut response = String::new();
-        stream.read_to_string(&mut response).unwrap();
+        stream.read_to_string(&mut response).await?;
 
-        response
-    }
+        println!("Received the response");
 
-    pub fn put(&self, body: &str) -> String {
-        let mut query_string = String::new();
-        for (key, value) in &self.query {
-            query_string.push_str(&format!("{}={}&", key, value));
-        }
-        let query_string = query_string.trim_end_matches('&');
+        let mut response = response.split("\r\n\r\n");
+        let headers = response.next().unwrap();
+        let body = response.next().unwrap();
 
-        let mut headers = String::new();
-        for (key, value) in &self.headers {
-            headers.push_str(&format!("{}: {}\r\n", key, value));
-        }
+        println!("headers: {}", headers);
+        println!("body: {}", body);
 
-        let request = format!(
-            "PUT {}?{} HTTP/1.1\r\nHost: {}\r\n{}\r\n{}\r\n",
-            self.path, query_string, self.host, headers, body
-        );
+        let mut headers = headers.split("\r\n");
+        let status_line = headers.next().unwrap();
+        let status_code = status_line.split_whitespace().nth(1).unwrap().parse().unwrap();
 
-        let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).unwrap();
-        stream.write(request.as_bytes()).unwrap();
+        println!("status_code: {}", status_code);
 
-        let mut response = String::new();
-        stream.read_to_string(&mut response).unwrap();
+        let headers = headers
+            .map(|header| {
+                let mut header = header.splitn(2, ": ");
+                let key = header.next().unwrap().to_string();
+                let value = header.next().unwrap().to_string();
+                (key, value)
+            })
+            .collect::<HashMap<String, String>>();
 
-        response
-    }
+        Ok(HttpResponse {
+            status_code,
+            headers,
+            body: body.to_string(),
+        })
 
-    pub fn delete(&self) -> String {
-        let mut query_string = String::new();
-        for (key, value) in &self.query {
-            query_string.push_str(&format!("{}={}&", key, value));
-        }
-        let query_string = query_string.trim_end_matches('&');
-
-        let mut headers = String::new();
-        for (key, value) in &self.headers {
-            headers.push_str(&format!("{}: {}\r\n", key, value));
-        }
-
-        let request = format!(
-            "DELETE {}?{} HTTP/1.1\r\nHost: {}\r\n{}\r\n",
-            self.path, query_string, self.host, headers
-        );
-
-        let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).unwrap();
-        stream.write(request.as_bytes()).unwrap();
-
-        let mut response = String::new();
-        stream.read_to_string(&mut response).unwrap();
-
-        response
     }
 }
 
-// pub fn fetch_url(url: &str) -> String {
-//     let url = Url::parse(url);
-//     let host = url.host();
-//     let port = url.port();
-//     let path = url.path();
-//     let mut query = HashMap::new();
-//     for (key, value) in url.query_pairs() {
-//         query.insert(key.to_string(), value.to_string());
-//     }
-
-//     let mut headers = HashMap::new();
-//     headers.insert("User-Agent".to_string(), "Rust".to_string());
-
-//     let mut client = HttpClient {
-//         host: host.to_string(),
-//         port,
-//         path: path.to_string(),
-//         query,
-//         headers,
-//     };
-
-//     client.get()
-// }
-
+pub async fn get(url: &str) -> Result<HttpResponse, std::io::Error> {
+    let http_client = HttpClient::new(url, Default::default());
+    http_client.get().await
+}
 // #[cfg(test)]
 // mod tests {
 //     use super::*;
