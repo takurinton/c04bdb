@@ -117,7 +117,7 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
                 "last_date: {:?}, item.title: {:?}, item.pub_date: {:?}",
                 last_date, item.title, date
             );
-            
+
             if date.naive_utc() > last_date {
                 items.push(item.clone());
             }

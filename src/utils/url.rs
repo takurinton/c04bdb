@@ -22,7 +22,10 @@ impl Url {
         // ユーザー情報とドメイン（ポート含む）を分割
         let mut authority_parts = authority.split('@');
         let (user_info, domain_and_port) = if authority_parts.clone().count() > 1 {
-            (Some(authority_parts.next().unwrap().to_string()), authority_parts.next().unwrap())
+            (
+                Some(authority_parts.next().unwrap().to_string()),
+                authority_parts.next().unwrap(),
+            )
         } else {
             (None, authority_parts.next().unwrap_or(""))
         };
@@ -30,7 +33,9 @@ impl Url {
         // ドメインとポートを分割
         let mut domain_and_port_parts = domain_and_port.splitn(2, ':');
         let domain = domain_and_port_parts.next().unwrap_or("").to_string();
-        let port = domain_and_port_parts.next().map(|p| p.parse::<u16>().unwrap_or_default());
+        let port = domain_and_port_parts
+            .next()
+            .map(|p| p.parse::<u16>().unwrap_or_default());
 
         // パス、クエリ、フラグメントを正確に分割
         let mut path = path_and_beyond.clone();
@@ -38,12 +43,12 @@ impl Url {
         let mut fragment = None;
 
         if let Some(frag_pos) = path_and_beyond.rfind('#') {
-            fragment = Some(path_and_beyond[frag_pos+1..].to_string());
+            fragment = Some(path_and_beyond[frag_pos + 1..].to_string());
             path = path_and_beyond[..frag_pos].to_string();
         }
 
         if let Some(query_pos) = path.rfind('?') {
-            query = Some(path[query_pos+1..].to_string());
+            query = Some(path[query_pos + 1..].to_string());
             path = path[..query_pos].to_string();
         }
 

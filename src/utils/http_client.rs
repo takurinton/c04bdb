@@ -74,11 +74,7 @@ impl HttpClient {
 
         let request = format!(
             "POST {}?{} HTTP/1.1\r\nHost: {}\r\n{}\r\n{}\r\n",
-            self.path,
-            query_string,
-            self.host,
-            headers,
-            body
+            self.path, query_string, self.host, headers, body
         );
 
         let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).unwrap();
@@ -104,11 +100,7 @@ impl HttpClient {
 
         let request = format!(
             "PUT {}?{} HTTP/1.1\r\nHost: {}\r\n{}\r\n{}\r\n",
-            self.path,
-            query_string,
-            self.host,
-            headers,
-            body
+            self.path, query_string, self.host, headers, body
         );
 
         let mut stream = TcpStream::connect(format!("{}:{}", self.host, self.port)).unwrap();
