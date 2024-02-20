@@ -110,12 +110,13 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
                 }
             };
 
+            // MEMO: たまに動かないのでログ仕込んでおく
+            println!(
+                "last_date: {:?}, item.title: {:?}, item.pub_date: {:?}",
+                last_date, item.title, date
+            );
+            
             if date.naive_utc() > last_date {
-                // MEMO: たまに動かないのでログ仕込んでおく
-                println!(
-                    "last_date: {:?}, item.title: {:?}, item.pub_date: {:?}",
-                    last_date, item.title, date
-                );
                 items.push(item.clone());
             }
         }
