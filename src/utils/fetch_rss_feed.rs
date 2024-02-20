@@ -86,6 +86,8 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
 
     let last_date = get_last_date(ctx).await?;
     let last_date = NaiveDateTime::parse_from_str(&last_date, "%Y-%m-%d %H:%M:%S")?;
+    // ラグ対策として半日巻き戻す
+    let last_date = last_date - chrono::Duration::hours(12);
 
     let mut items = Vec::new();
     for url in rss_list {
