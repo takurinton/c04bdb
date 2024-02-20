@@ -145,6 +145,15 @@ mod tests {
         assert_eq!(url.query, None);
         assert_eq!(url.fragment, Some("fragment".to_string()));
 
+        let url = Url::parse("https://example.com/path/to/somewhere?foo=bar");
+        assert_eq!(url.scheme, "https");
+        assert_eq!(url.user_info, None);
+        assert_eq!(url.domain, "example.com");
+        assert_eq!(url.port, None);
+        assert_eq!(url.path, "/path/to/somewhere");
+        assert_eq!(url.query, Some("foo=bar".to_string()));
+        assert_eq!(url.fragment, None);
+
         let url = Url::parse("https://example.com/path/to/somewhere");
         assert_eq!(url.scheme, "https");
         assert_eq!(url.user_info, None);
