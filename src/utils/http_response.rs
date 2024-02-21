@@ -63,7 +63,7 @@ impl HttpResponse {
                 }
             }
         }
-        
+
         if chunked {
             // Transfer-Encoding: chunked の場合は chunked で処理する
             loop {
