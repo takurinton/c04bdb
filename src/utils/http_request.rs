@@ -36,7 +36,7 @@ impl HttpRequest {
         }
     }
 
-    pub async fn init_stream(&self) -> tokio_native_tls::TlsStream<TcpStream> {
+    async fn init_stream(&self) -> tokio_native_tls::TlsStream<TcpStream> {
         let tcp_stream = match TcpStream::connect((self.host.as_str(), self.port)).await {
             Ok(tcp_stream) => tcp_stream,
             Err(why) => panic!("tcp stream error: {:?}", why),
@@ -50,7 +50,6 @@ impl HttpRequest {
             Err(why) => panic!("tls stream error: {:?}", why),
         };
 
-        // self.stream = Some(tls_stream);
         tls_stream
     }
 

@@ -39,14 +39,13 @@ impl HttpResponse {
         let mut body = Vec::new();
         let mut status_code = 0;
 
-        // レスポンスの最初の行（ステータスライン）を読み込む
         let mut status_line = String::new();
         stream_reader.read_line(&mut status_line).await?;
         if let Some(code) = status_line.split_whitespace().nth(1) {
             status_code = code.parse().unwrap_or(0);
         }
 
-        // ヘッダーを読み込む
+        // header を読み込む
         let mut chunked = false;
         loop {
             let mut line = String::new();
@@ -58,11 +57,13 @@ impl HttpResponse {
             let parts: Vec<&str> = line.trim_end_matches("\r\n").splitn(2, ": ").collect();
             if parts.len() == 2 {
                 headers.insert(parts[0].to_string(), parts[1].to_string());
+                // Transfer-Encoding: chunked の場合は chunked で処理するため、フラグを立てる
                 if parts[0] == "Transfer-Encoding" && parts[1] == "chunked" {
                     chunked = true;
                 }
             }
         }
+        
         if chunked {
             // Transfer-Encoding: chunked の場合は chunked で処理する
             loop {
@@ -71,13 +72,12 @@ impl HttpResponse {
                 let size = match usize::from_str_radix(size_str.trim(), 16) {
                     Ok(size) => size,
                     Err(_) => {
-                        // サイズが16進数でない場合は終了
                         break;
                     }
                 };
 
                 if size == 0 {
-                    // チャンクのサイズが0の場合は終了
+                    // chunk のサイズが0の場合は終了
                     break;
                 }
 
@@ -85,7 +85,7 @@ impl HttpResponse {
                 stream_reader.read_exact(&mut buffer).await?;
                 body.extend(buffer);
 
-                // チャンクの終わりのCRLFを読み飛ばす
+                // chunk の終わりの CRLF を読み飛ばす
                 let mut end_of_chunk = vec![0; 2];
                 stream_reader.read_exact(&mut end_of_chunk).await?;
             }

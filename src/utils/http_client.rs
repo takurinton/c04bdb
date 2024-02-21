@@ -24,23 +24,48 @@ impl HttpClient {
         }
     }
 
+    /// Set header
+    /// # Example
+    /// ```
+    /// let mut client = HttpClient::new();
+    /// let response = client.set_header("Content-Type", "application/json").post("https://example.com", "{}").await;
+    /// ```
     pub fn set_header(&mut self, key: &str, value: &str) -> &mut Self {
         self.headers.insert(key.to_string(), value.to_string());
         self
     }
 
+    /// Set header for Authorization
+    /// # Example
+    /// ```
+    /// let token = "your_token".to_string();
+    /// let mut client = HttpClient::new();
+    /// let response = client.header_author(token).post("https://example.com", "{}").await;
+    /// ```
     pub fn header_authorization(&mut self, token: String) -> &mut Self {
         self.headers
             .insert("Authorization".to_string(), format!("Bearer {}", token));
         self
     }
 
+    /// Send GET request
+    /// # Example
+    /// ```
+    /// let mut client = HttpClient::new();
+    /// let response = client.get("https://example.com").await;
+    /// ```
     pub async fn get(&self, url: &str) -> Result<HttpResponse, std::io::Error> {
         let mut request = HttpRequest::new(url, self.headers.clone());
         request.get().await;
         self.send(request).await
     }
 
+    /// Send POST request
+    /// # Example
+    /// ```
+    /// let mut client = HttpClient::new();
+    /// let response = client.post("https://example.com", "{}").await;
+    /// ```
     pub async fn post(&self, url: &str, body: String) -> Result<HttpResponse, std::io::Error> {
         let mut request = HttpRequest::new(url, self.headers.clone());
         request.post(body.as_str()).await;

@@ -18,12 +18,10 @@ impl Url {
         let scheme = url_parts.next().unwrap().to_string();
         let rest = url_parts.next().unwrap_or("");
 
-        // オーソリティとパス以降を分割
         let mut rest_parts = rest.splitn(2, '/');
         let authority = rest_parts.next().unwrap_or("");
         let path_and_beyond = format!("/{}", rest_parts.next().unwrap_or(""));
 
-        // ユーザー情報とドメイン（ポート含む）を分割
         let mut authority_parts = authority.split('@');
         let (user_info, domain_and_port) = if authority_parts.clone().count() > 1 {
             (
@@ -34,14 +32,12 @@ impl Url {
             (None, authority_parts.next().unwrap_or(""))
         };
 
-        // ドメインとポートを分割
         let mut domain_and_port_parts = domain_and_port.splitn(2, ':');
         let domain = domain_and_port_parts.next().unwrap_or("").to_string();
         let port = domain_and_port_parts
             .next()
             .map(|p| p.parse::<u16>().unwrap_or_default());
 
-        // パス、クエリ、フラグメントを正確に分割
         let mut path = path_and_beyond.clone();
         let mut query = None;
         let mut fragment = None;
@@ -109,7 +105,6 @@ impl Url {
     }
 }
 
-// テスト
 #[cfg(test)]
 mod tests {
     use super::*;
