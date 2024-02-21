@@ -86,6 +86,8 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
 
     let last_date = get_last_date(ctx).await?;
     let last_date = NaiveDateTime::parse_from_str(&last_date, "%Y-%m-%d %H:%M:%S")?;
+    // ラグ対策として半日巻き戻す
+    let last_date = last_date - chrono::Duration::hours(12);
 
     let mut items = Vec::new();
     for url in rss_list {
@@ -103,19 +105,13 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
                 None => "",
             };
             let date = match DateTime::parse_from_rfc2822(date) {
-                Ok(date) => date,
+                Ok(date) => date - chrono::Duration::hours(12),
                 Err(_) => {
                     // 形式が正しくなかったら除外するために 1970年1月1日を GMT 形式で DateTime に parse して返す
                     DateTime::parse_from_rfc2822("Thu, 01 Jan 1970 00:00:00 GMT")?
                 }
             };
 
-            // MEMO: たまに動かないのでログ仕込んでおく
-            println!(
-                "last_date: {:?}, item.title: {:?}, item.pub_date: {:?}",
-                last_date, item.title, date
-            );
-            
             if date.naive_utc() > last_date {
                 items.push(item.clone());
             }
