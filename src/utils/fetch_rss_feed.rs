@@ -112,9 +112,9 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
                 }
             };
 
-            // if date.naive_utc() > last_date {
-            //     items.push(item.clone());
-            // }
+            if date.naive_utc() > last_date {
+                items.push(item.clone());
+            }
         }
     }
 

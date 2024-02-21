@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 pub struct Url {
+    #[allow(dead_code)]
     scheme: String,
+    #[allow(dead_code)]
     user_info: Option<String>,
     domain: String,
     port: Option<u16>,
@@ -65,23 +67,9 @@ impl Url {
         }
     }
 
-    // TODO: 分割する
-    pub fn to_string(&self) -> String {
-        // let mut url = format!("{}://", self.scheme);
-        let mut url = "".to_string();
-        if let Some(user_info) = &self.user_info {
-            url.push_str(&format!("{}@", user_info));
-        }
-        url.push_str(&self.domain);
-        url.push_str(&format!(":{}", self.port.unwrap_or(443)));
-        url.push_str(&self.path);
-        if let Some(query) = &self.query {
-            url.push_str(&format!("?{}", query));
-        }
-        if let Some(fragment) = &self.fragment {
-            url.push_str(&format!("#{}", fragment));
-        }
-        url
+    #[allow(dead_code)]
+    pub fn is_https(&self) -> bool {
+        self.scheme == "https"
     }
 
     pub fn host(&self) -> String {
@@ -89,17 +77,19 @@ impl Url {
     }
 
     pub fn port(&self) -> u16 {
-        self.port.unwrap_or(80)
+        self.port.unwrap_or(443)
     }
 
     pub fn path(&self) -> String {
         self.path.clone()
     }
 
+    #[allow(dead_code)]
     pub fn query(&self) -> Option<String> {
         self.query.clone()
     }
 
+    #[allow(dead_code)]
     pub fn fragment(&self) -> Option<String> {
         self.fragment.clone()
     }

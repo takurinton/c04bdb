@@ -1,6 +1,6 @@
-use reqwest;
-use reqwest::header;
 use serde::Deserialize;
+
+use crate::utils::http_client::HttpClient;
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleItem {
@@ -36,25 +36,19 @@ struct GithubTrend {
 pub async fn github_search(language: &str) -> Result<Vec<GithubTrendItem>, String> {
     let url = format!("https://api.github.com/search/repositories?q=language:{language}&order=desc&per_page=10&since=daily");
 
-    let client = reqwest::Client::new();
-    let response = client
-        .get(url)
-        .header(header::ACCEPT, "application/json")
-        .header(header::USER_AGENT, "Rinton")
-        .send();
+    let client = HttpClient::new();
+    let response = client.get(&url);
 
     let response = match response.await {
         Ok(response) => response,
         Err(_) => return Err("Github でエラーが発生しました。".to_string()),
     };
 
-    let _ = match response.status() {
-        reqwest::StatusCode::OK => (),
-        reqwest::StatusCode::UNAUTHORIZED => return Err("認証に失敗しました。".to_string()),
-        reqwest::StatusCode::FORBIDDEN => return Err("アクセス権限がありません。".to_string()),
-        reqwest::StatusCode::NOT_FOUND => {
-            return Err("リソースが見つかりませんでした。".to_string())
-        }
+    let _ = match response.status_code {
+        200 => (),
+        401 => return Err("認証に失敗しました。".to_string()),
+        403 => return Err("アクセス権限がありません。".to_string()),
+        404 => return Err("リソースが見つかりませんでした。".to_string()),
         _ => return Err("予期しないエラーが発生しました。".to_string()),
     };
 
