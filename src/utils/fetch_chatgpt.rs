@@ -1,6 +1,7 @@
-use reqwest;
 use serde::Deserialize;
 use std::env;
+
+use crate::utils::http_client::HttpClient;
 
 #[derive(Deserialize)]
 struct ChatGPTMessage {
@@ -18,22 +19,22 @@ struct ChatGPTResponse {
 }
 
 pub async fn fetch_chatgpt(content: String, prompts: Vec<String>) -> String {
-    let client = reqwest::Client::new();
     let prompts = prompts
         .iter()
         .map(|p| format!(r#"{{ "role": "system", "content": "{}" }},"#, p))
         .collect::<Vec<String>>()
         .join("");
+
+    let request_body = format!(
+        r#"{{ "model": "gpt-3.5-turbo", "messages": [{}{{ "role": "user", "content": "{}" }}] }}"#,
+        prompts, content
+    );
+
+    let mut client = HttpClient::new();
     let response = match client
-        .post("https://api.openai.com/v1/chat/completions")
-        .bearer_auth(env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY is not defined"))
-        .header(reqwest::header::CONTENT_TYPE, "application/json")
-        .body(format!(
-            r#"{{ "model": "gpt-3.5-turbo", "messages": [{}{{ "role": "user", "content": "{}" }}] }}"#,
-            prompts,
-            content
-        ))
-        .send()
+        .set_header("Content-Type", "application/json")
+        .header_authorization(env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY is not defined"))
+        .post("https://api.openai.com/v1/chat/completions", request_body)
         .await
     {
         Ok(response) => response,

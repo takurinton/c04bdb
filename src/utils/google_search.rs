@@ -48,6 +48,7 @@ pub async fn google_search(
         }
         Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),
     };
+
     let body = match result.json::<GoogleResponse>().await {
         Ok(body) => body,
         Err(_) => return Err("jsonのparseに失敗しました。".to_string()),

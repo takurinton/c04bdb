@@ -50,7 +50,6 @@ pub async fn ready(ctx: Context) {
 
     let db_channel = get_db_channel(&ctx).await.unwrap();
 
-    // rss_last_date prefix がついているメッセージを削除
     let messages = db_channel
         .messages(&ctx.http, |retriever| retriever.limit(1))
         .await
