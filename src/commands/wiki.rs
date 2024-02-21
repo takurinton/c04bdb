@@ -58,14 +58,14 @@ pub async fn run(options: &[CommandDataOption]) -> String {
         Ok(response) => response,
         Err(_) => {
             return "通信エラーが発生しました".to_string();
-        },
+        }
     };
 
     let json = match response.json::<Response>().await {
         Ok(json) => json,
         Err(_) => {
             return "jsonのparseに失敗しました".to_string();
-        },
+        }
     };
 
     let res = format!(
