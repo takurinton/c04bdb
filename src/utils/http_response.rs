@@ -90,12 +90,8 @@ impl HttpResponse {
                 stream_reader.read_exact(&mut end_of_chunk).await?;
             }
         } else {
-            if let Some(content_length) = headers.get("Content-Length") {
-                let content_length = content_length.parse::<usize>().unwrap_or(0);
-                let mut buffer = vec![0; content_length];
-                stream_reader.read_exact(&mut buffer).await?;
-                body.extend(buffer);
-            }
+            // chunked ではない場合はそのまま処理する
+            stream_reader.read_to_end(&mut body).await?;
         }
 
         let body_string = String::from_utf8(body).expect("Failed to convert body to String");

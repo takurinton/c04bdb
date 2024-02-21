@@ -1,6 +1,7 @@
-use reqwest;
 use serde::Deserialize;
 use std::env;
+
+use super::http_client::HttpClient;
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleItem {
@@ -35,20 +36,20 @@ pub async fn google_search(
     let url = format!(
     "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={q}{site}");
 
-    let result = match reqwest::get(&url).await {
+    let client = HttpClient::new();
+    let result = match client.get(&url).await {
         Ok(result) => {
-            if result.status() == reqwest::StatusCode::OK {
+            if result.status_code == 200 {
                 result
             } else {
                 return Err(format!(
                     "Google 検索でエラーが発生しました。ステータスコード: {}",
-                    result.status()
+                    result.status_code
                 ));
             }
         }
         Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),
     };
-
     let body = match result.json::<GoogleResponse>().await {
         Ok(body) => body,
         Err(_) => return Err("jsonのparseに失敗しました。".to_string()),

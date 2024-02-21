@@ -25,49 +25,49 @@ pub async fn ready(ctx: Context) {
     })
     .await;
 
-    let feeds = match fetch_rss_feed(&ctx).await {
-        Ok(feeds) => feeds,
-        Err(why) => {
-            println!("Error fetching rss feed: {:?}", why);
-            vec![]
-        }
-    };
+    // let feeds = match fetch_rss_feed(&ctx).await {
+    //     Ok(feeds) => feeds,
+    //     Err(why) => {
+    //         println!("Error fetching rss feed: {:?}", why);
+    //         vec![]
+    //     }
+    // };
 
     // channel に post
-    let channel = ChannelId(1208611584964825099);
-    for feed in feeds {
-        let _ = match feed.link {
-            // link が存在したらそのまま送信する
-            Some(link) => {
-                let _ = channel.send_message(&ctx.http, |m| m.content(link)).await;
-            }
-            // 何もなかったら何もしない
-            None => {
-                println!("link がありません");
-            }
-        };
-    }
+    // let channel = ChannelId(1208611584964825099);
+    // for feed in feeds {
+    //     let _ = match feed.link {
+    //         // link が存在したらそのまま送信する
+    //         Some(link) => {
+    //             let _ = channel.send_message(&ctx.http, |m| m.content(link)).await;
+    //         }
+    //         // 何もなかったら何もしない
+    //         None => {
+    //             println!("link がありません");
+    //         }
+    //     };
+    // }
 
-    let db_channel = get_db_channel(&ctx).await.unwrap();
+    // let db_channel = get_db_channel(&ctx).await.unwrap();
 
-    let messages = db_channel
-        .messages(&ctx.http, |retriever| retriever.limit(1))
-        .await
-        .unwrap()
-        .into_iter()
-        .filter(|message| message.content.starts_with("rss_last_date"))
-        .collect::<Vec<_>>();
+    // let messages = db_channel
+    //     .messages(&ctx.http, |retriever| retriever.limit(1))
+    //     .await
+    //     .unwrap()
+    //     .into_iter()
+    //     .filter(|message| message.content.starts_with("rss_last_date"))
+    //     .collect::<Vec<_>>();
 
-    for message in messages {
-        let _ = message.delete(&ctx.http).await;
-    }
+    // for message in messages {
+    //     let _ = message.delete(&ctx.http).await;
+    // }
 
-    // 日付を更新
-    let now = chrono::Utc::now();
-    let now = now.format("%Y-%m-%d %H:%M:%S").to_string();
-    let _ = db_channel
-        .send_message(&ctx.http, |m| m.content(format!("rss_last_date {}", now)))
-        .await;
+    // // 日付を更新
+    // let now = chrono::Utc::now();
+    // let now = now.format("%Y-%m-%d %H:%M:%S").to_string();
+    // let _ = db_channel
+    //     .send_message(&ctx.http, |m| m.content(format!("rss_last_date {}", now)))
+    //     .await;
 
     println!("connected!");
 }

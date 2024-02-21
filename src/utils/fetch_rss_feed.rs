@@ -1,10 +1,9 @@
 use chrono::{DateTime, NaiveDateTime};
-use reqwest;
 use rss::{Channel, Item};
 use serenity::client::Context;
 use std::error::Error;
 
-use super::get_db_channel::get_db_channel;
+use super::{get_db_channel::get_db_channel, http_client::HttpClient};
 
 // rss のリストを #db チャンネルから `rss_link` という prefix がついてるものを取得。
 // TODO: コマンド経由で追加できるようにする
@@ -43,7 +42,17 @@ async fn get_rss_list(ctx: &Context) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 async fn fetch_feed(url: String) -> Result<Channel, Box<dyn Error>> {
-    let content = reqwest::get(url).await?.bytes().await?;
+    let client = HttpClient::new();
+    let result = match client.get(&url).await {
+        Ok(content) => content,
+        Err(_) => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "URL が見つかりません。",
+            )))
+        }
+    };
+    let content = result.body.as_bytes();
     let channel = Channel::read_from(&content[..])?;
     Ok(channel)
 }

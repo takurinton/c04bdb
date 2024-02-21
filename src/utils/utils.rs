@@ -1,8 +1,6 @@
 use std::env;
 
 use chrono::NaiveDateTime;
-use reqwest;
-use reqwest::header;
 
 use serde::Deserialize;
 use serenity::{
@@ -15,6 +13,8 @@ use serenity::{
 
 use rss::{Channel, Item};
 use std::error::Error;
+
+use crate::utils::http_client::HttpClient;
 
 
 // rss のリストを #db チャンネルから `rss_link` という prefix がついてるものを取得。
@@ -54,7 +54,8 @@ async fn get_rss_list(ctx: &Context) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 async fn fetch_feed(url: String) -> Result<Channel, Box<dyn Error>> {
-    let content = reqwest::get(url).await?.bytes().await?;
+    let client = HttpClient::new();
+    let content = client.get(url).await?.bytes().await?;
     let channel = Channel::read_from(&content[..])?;
     Ok(channel)
 }

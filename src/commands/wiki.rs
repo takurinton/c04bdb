@@ -1,4 +1,3 @@
-use reqwest;
 use serde::Deserialize;
 use serenity::builder::CreateApplicationCommand;
 use serenity::model::prelude::command::CommandOptionType;
@@ -7,6 +6,7 @@ use serenity::model::prelude::interaction::application_command::{
 };
 
 use crate::utils::google_search::google_search;
+use crate::utils::http_client::HttpClient;
 use crate::utils::percent_decode::percent_decode;
 
 #[derive(Deserialize)]
@@ -52,18 +52,19 @@ pub async fn run(options: &[CommandDataOption]) -> String {
     };
 
     let text = wikipedia.replace("https://ja.wikipedia.org/wiki/", "");
-    let client = reqwest::Client::new();
-    let response = match client
-        .get(format!("https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles={}", text))
-        .send().await {
-        Ok(response) => match response.json::<Response>().await {
-            Ok(response) => response,
-            Err(_) => {
-                return "wikipedia の取得に失敗しました。".to_string();
-            },
-        },
+    let url = format!("https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles={}", text);
+    let client = HttpClient::new();
+    let response = match client.get(&url).await {
+        Ok(response) => response,
         Err(_) => {
             return "通信エラーが発生しました".to_string();
+        },
+    };
+
+    let json = match response.json::<Response>().await {
+        Ok(json) => json,
+        Err(_) => {
+            return "jsonのparseに失敗しました".to_string();
         },
     };
 
@@ -74,8 +75,8 @@ pub async fn run(options: &[CommandDataOption]) -> String {
 https://ja.wikipedia.org/wiki/{}",
         search_text,
         percent_decode(text.as_str()),
-        response.query.pages.iter().next().unwrap().1.extract,
-        response.query.pages.iter().next().unwrap().1.title
+        json.query.pages.iter().next().unwrap().1.extract,
+        json.query.pages.iter().next().unwrap().1.title
     );
 
     res
