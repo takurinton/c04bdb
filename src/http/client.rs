@@ -11,6 +11,25 @@ fn default_headers() -> HashMap<String, String> {
     headers
 }
 
+pub enum StatusCode {
+    OK = 200,
+    Created = 201,
+    Accepted = 202,
+    NoContent = 204,
+    MovedPermanently = 301,
+    Found = 302,
+    NotModified = 304,
+    BadRequest = 400,
+    Unauthorized = 401,
+    Forbidden = 403,
+    NotFound = 404,
+    MethodNotAllowed = 405,
+    RequestTimeout = 408,
+    TooManyRequests = 429,
+    InternalServerError = 500,
+    Unsupported = 0,
+}
+
 pub struct HttpClient {
     pub url: String,
     pub headers: HashMap<String, String>,

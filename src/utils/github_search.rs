@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::http::client::HttpClient;
+use crate::http::client::{HttpClient, StatusCode};
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleItem {
@@ -45,10 +45,10 @@ pub async fn github_search(language: &str) -> Result<Vec<GithubTrendItem>, Strin
     };
 
     let _ = match response.status_code {
-        200 => (),
-        401 => return Err("認証に失敗しました。".to_string()),
-        403 => return Err("アクセス権限がありません。".to_string()),
-        404 => return Err("リソースが見つかりませんでした。".to_string()),
+        StatusCode::OK => (),
+        StatusCode::Unauthorized => return Err("認証に失敗しました。".to_string()),
+        StatusCode::Forbidden => return Err("アクセス権限がありません。".to_string()),
+        StatusCode::NotFound => return Err("リソースが見つかりませんでした。".to_string()),
         _ => return Err("予期しないエラーが発生しました。".to_string()),
     };
 

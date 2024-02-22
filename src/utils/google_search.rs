@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::env;
 
-use crate::http::client::HttpClient;
+use crate::http::client::{HttpClient, StatusCode};
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleItem {
@@ -39,13 +39,13 @@ pub async fn google_search(
     let client = HttpClient::new();
     let result = match client.get(&url).await {
         Ok(result) => {
-            if result.status_code == 200 {
-                result
-            } else {
-                return Err(format!(
-                    "Google 検索でエラーが発生しました。ステータスコード: {}",
-                    result.status_code
-                ));
+            match result.status_code {
+                StatusCode::OK => result,
+                StatusCode::Unauthorized => return Err("認証に失敗しました。".to_string()),
+                StatusCode::Forbidden => return Err("アクセス権限がありません。".to_string()),
+                StatusCode::NotFound => return Err("リソースが見つかりませんでした。".to_string()),
+                StatusCode::TooManyRequests => return Err("Google Search API へのリクエスト超過です。しばらくしてからやり直してください。".to_string()),
+                _ => return Err("予期しないエラーが発生しました。".to_string()),
             }
         }
         Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),

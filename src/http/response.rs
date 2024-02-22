@@ -3,8 +3,10 @@ use tokio::io::AsyncBufReadExt;
 use tokio::io::{self, AsyncReadExt};
 use tokio::net::TcpStream;
 
+use super::client::StatusCode;
+
 pub struct HttpResponse {
-    pub status_code: u16,
+    pub status_code: StatusCode,
     pub headers: HashMap<String, String>,
     pub body: String,
 }
@@ -37,12 +39,32 @@ impl HttpResponse {
         let mut stream_reader = io::BufReader::new(stream);
         let mut headers = HashMap::new();
         let mut body = Vec::new();
-        let mut status_code = 0;
+        let mut status_code = StatusCode::Unsupported;
 
         let mut status_line = String::new();
         stream_reader.read_line(&mut status_line).await?;
         if let Some(code) = status_line.split_whitespace().nth(1) {
-            status_code = code.parse().unwrap_or(0);
+            status_code = match code.parse::<u16>() {
+                Ok(code) => match code {
+                    200 => StatusCode::OK,
+                    201 => StatusCode::Created,
+                    202 => StatusCode::Accepted,
+                    204 => StatusCode::NoContent,
+                    301 => StatusCode::MovedPermanently,
+                    302 => StatusCode::Found,
+                    304 => StatusCode::NotModified,
+                    400 => StatusCode::BadRequest,
+                    401 => StatusCode::Unauthorized,
+                    403 => StatusCode::Forbidden,
+                    404 => StatusCode::NotFound,
+                    405 => StatusCode::MethodNotAllowed,
+                    408 => StatusCode::RequestTimeout,
+                    429 => StatusCode::TooManyRequests,
+                    500 => StatusCode::InternalServerError,
+                    _ => StatusCode::Unsupported,
+                },
+                Err(_) => StatusCode::Unsupported,
+            };
         }
 
         // header を読み込む
