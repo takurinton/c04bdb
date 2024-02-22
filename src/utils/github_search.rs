@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::utils::http_client::HttpClient;
+use crate::http::client::HttpClient;
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleItem {

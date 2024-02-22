@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::env;
 
-use crate::utils::http_client::HttpClient;
+use crate::http::client::HttpClient;
 
 #[derive(Deserialize)]
 struct ChatGPTMessage {

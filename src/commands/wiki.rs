@@ -6,8 +6,8 @@ use serenity::model::prelude::interaction::application_command::{
 };
 
 use crate::utils::google_search::google_search;
-use crate::utils::http_client::HttpClient;
 use crate::utils::percent_decode::percent_decode;
+use crate::http::client::HttpClient;
 
 #[derive(Deserialize)]
 struct Pages {
