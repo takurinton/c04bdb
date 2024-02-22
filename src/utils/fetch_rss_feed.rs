@@ -7,7 +7,6 @@ use super::get_db_channel::get_db_channel;
 use crate::http::client::HttpClient;
 
 // rss のリストを #db チャンネルから `rss_link` という prefix がついてるものを取得。
-// TODO: コマンド経由で追加できるようにする
 async fn get_rss_list(ctx: &Context) -> Result<Vec<String>, Box<dyn Error>> {
     let db_channel = get_db_channel(ctx).await?;
 
