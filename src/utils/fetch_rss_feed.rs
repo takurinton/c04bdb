@@ -3,7 +3,8 @@ use rss::{Channel, Item};
 use serenity::client::Context;
 use std::error::Error;
 
-use super::{get_db_channel::get_db_channel, http_client::HttpClient};
+use super::get_db_channel::get_db_channel;
+use crate::http::client::HttpClient;
 
 // rss のリストを #db チャンネルから `rss_link` という prefix がついてるものを取得。
 // TODO: コマンド経由で追加できるようにする

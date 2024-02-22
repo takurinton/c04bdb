@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 
-use crate::utils::http_response::HttpResponse;
-use crate::utils::tls::TlsConnectorBuilder;
-use crate::utils::url::Url;
+use super::response::HttpResponse;
+use super::tls::TlsConnectorBuilder;
+use crate::url::url::Url;
 
 pub struct HttpRequest {
     pub url: Url,

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::utils::http_request::HttpRequest;
-use crate::utils::http_response::HttpResponse;
+use super::request::HttpRequest;
+use super::response::HttpResponse;
 
 fn default_headers() -> HashMap<String, String> {
     let mut headers = HashMap::new();
