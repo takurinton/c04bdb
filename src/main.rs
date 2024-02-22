@@ -1,8 +1,8 @@
 mod commands;
 mod handler;
-mod utils;
 mod http;
 mod url;
+mod utils;
 
 use std::env;
 

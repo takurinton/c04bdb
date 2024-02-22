@@ -7,7 +7,6 @@ use serenity::model::prelude::interaction::application_command::{
 use crate::utils::percent_decode::percent_decode;
 use crate::utils::wikipedia_search::wikipedia_search;
 
-
 pub async fn run(options: &[CommandDataOption]) -> String {
     let search_text = match options.get(0) {
         Some(option) => match &option.resolved {
