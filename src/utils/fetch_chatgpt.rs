@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::env;
+use tracing::error;
 
 use crate::http::client::HttpClient;
 
@@ -30,15 +31,24 @@ pub async fn fetch_chatgpt(content: String, prompts: Vec<String>) -> String {
         prompts, content
     );
 
+    let open_api_key = match env::var("OPENAI_API_KEY") {
+        Ok(key) => key,
+        Err(_) => {
+            error!("OPENAI_API_KEY is not defined");
+            return "APIキーが設定されていません。".to_string();
+        }
+    };
+
     let mut client = HttpClient::new();
     let response = match client
         .set_header("Content-Type", "application/json")
-        .header_authorization(env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY is not defined"))
+        .header_authorization(open_api_key)
         .post("https://api.openai.com/v1/chat/completions", request_body)
         .await
     {
         Ok(response) => response,
         Err(_) => {
+            error!("failed to request to chatgpt");
             return "通信エラーが発生しました。".to_string();
         }
     };
@@ -46,6 +56,7 @@ pub async fn fetch_chatgpt(content: String, prompts: Vec<String>) -> String {
     let body = match response.json::<ChatGPTResponse>().await {
         Ok(body) => body,
         Err(_) => {
+            error!("failed to parse chatgpt response");
             return "コンテンツの取得に失敗しました。".to_string();
         }
     };

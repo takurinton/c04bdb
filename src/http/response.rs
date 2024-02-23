@@ -26,10 +26,7 @@ impl HttpResponse {
         let full = &self.body.as_bytes();
         match serde_json::from_slice(full) {
             Ok(body) => Ok(body),
-            Err(why) => {
-                println!("json parse error: {:?}", why);
-                Err(why)
-            }
+            Err(why) => Err(why),
         }
     }
 
@@ -116,7 +113,15 @@ impl HttpResponse {
             stream_reader.read_to_end(&mut body).await?;
         }
 
-        let body_string = String::from_utf8(body).expect("Failed to convert body to String");
+        let body_string = match String::from_utf8(body) {
+            Ok(body) => body,
+            Err(_) => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "response body is not utf-8",
+                ))
+            }
+        };
 
         Ok(HttpResponse {
             status_code,

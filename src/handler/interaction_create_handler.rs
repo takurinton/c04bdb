@@ -2,11 +2,13 @@ use serenity::{
     client::Context,
     model::application::interaction::{Interaction, InteractionResponseType},
 };
+use tracing::{error, info};
 
 use crate::commands;
 
 pub async fn interaction_create(ctx: Context, interaction: Interaction) {
     if let Interaction::ApplicationCommand(command) = interaction {
+        info!("called command: {:?}", command.data.name);
         let content = match command.data.name.as_str() {
             "random" => commands::random::run(&command.data.options),
             "friday" => commands::friday::run(&command.data.options),
@@ -31,7 +33,7 @@ pub async fn interaction_create(ctx: Context, interaction: Interaction) {
             })
             .await
         {
-            println!("Cannot respond to slash command: {}", why);
+            error!("failed to create interaction response: {:?}", why);
         }
     }
 }

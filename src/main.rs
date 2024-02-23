@@ -11,22 +11,51 @@ use serenity::prelude::*;
 
 use crate::handler::Handler;
 
+use tracing::{error, info, Level};
+use tracing_subscriber::FmtSubscriber;
+
 #[tokio::main]
 async fn main() {
-    let token = env::var("RINTON_DISCORD_TOKEN").expect("Expected a token in the environment");
+    // let _ = tracing_subscriber::registry()
+    //     .with(tracing_subscriber::fmt::layer())
+    //     .init();
+
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::INFO)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("トレーシングサブスクライバーの設定に失敗");
+
+    let token = match env::var("RINTON_DISCORD_TOKEN") {
+        Ok(token) => token,
+        Err(_) => {
+            error!("No token found in environment variable RINTON_DISCORD_TOKEN");
+            return;
+        }
+    };
+
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
     let framework = StandardFramework::new();
 
-    let mut client = Client::builder(&token, intents)
+    let mut client = match Client::builder(&token, intents)
         .framework(framework)
         .event_handler(Handler)
         .await
-        .expect("Err creating client");
+    {
+        Ok(client) => client,
+        Err(why) => {
+            error!("Error creating client: {:?}", why);
+            return;
+        }
+    };
 
     if let Err(why) = client.start().await {
-        println!("Client error: {:?}", why);
+        error!("Client error: {:?}", why);
     }
+
+    info!("Client started");
 }
