@@ -16,16 +16,11 @@ use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
 async fn main() {
-    // let _ = tracing_subscriber::registry()
-    //     .with(tracing_subscriber::fmt::layer())
-    //     .init();
-
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("トレーシングサブスクライバーの設定に失敗");
+    tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
 
     let token = match env::var("RINTON_DISCORD_TOKEN") {
         Ok(token) => token,
