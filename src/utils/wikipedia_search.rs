@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use tracing::error;
 
 use super::google_search::google_search;
 use crate::http::client::HttpClient;
@@ -31,7 +32,10 @@ pub async fn wikipedia_search(search_text: &str) -> Result<(Response, String), S
         _ => false,
     }) {
         Some(item) => item.link.clone(),
-        None => return Err("wikipedia の検索に失敗しました。".to_string()),
+        None => {
+            error!("failed to find wikipedia link");
+            return Err("wikipedia の検索に失敗しました。".to_string());
+        }
     };
 
     let text = wikipedia.replace("https://ja.wikipedia.org/wiki/", "");
@@ -40,6 +44,7 @@ pub async fn wikipedia_search(search_text: &str) -> Result<(Response, String), S
     let response = match client.get(&url).await {
         Ok(response) => response,
         Err(_) => {
+            error!("failed to network request to wikipedia");
             return Err("通信エラーが発生しました".to_string());
         }
     };
@@ -47,6 +52,7 @@ pub async fn wikipedia_search(search_text: &str) -> Result<(Response, String), S
     let json = match response.json::<Response>().await {
         Ok(json) => json,
         Err(_) => {
+            error!("failed to parse wikipedia response");
             return Err("jsonのparseに失敗しました".to_string());
         }
     };

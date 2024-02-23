@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use tracing::{error, warn};
 
 use crate::http::client::{HttpClient, StatusCode};
 
@@ -41,20 +42,30 @@ pub async fn github_search(language: &str) -> Result<Vec<GithubTrendItem>, Strin
 
     let response = match response.await {
         Ok(response) => response,
-        Err(_) => return Err("Github でエラーが発生しました。".to_string()),
+        Err(_) => {
+            warn!("github api request failed");
+            return Err("ネットワークエラーです。".to_string());
+        }
     };
 
     let _ = match response.status_code {
         StatusCode::OK => (),
-        StatusCode::Unauthorized => return Err("認証に失敗しました。".to_string()),
-        StatusCode::Forbidden => return Err("アクセス権限がありません。".to_string()),
-        StatusCode::NotFound => return Err("リソースが見つかりませんでした。".to_string()),
-        _ => return Err("予期しないエラーが発生しました。".to_string()),
+        StatusCode::NotFound => {
+            error!("github api not found");
+            return Err("リソースが見つかりませんでした。".to_string());
+        }
+        _ => {
+            error!("github api error");
+            return Err("エラーが発生しました。".to_string());
+        }
     };
 
     let body = match response.json::<GithubTrend>().await {
         Ok(body) => body,
-        Err(_) => return Err("jsonのparseに失敗しました。".to_string()),
+        Err(_) => {
+            error!("json parse failed");
+            return Err("json の parse に失敗しました。".to_string());
+        }
     };
 
     Ok(body.items)

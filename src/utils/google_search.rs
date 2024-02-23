@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::env;
+use tracing::error;
 
 use crate::http::client::{HttpClient, StatusCode};
 
@@ -31,23 +32,37 @@ pub async fn google_search(
     } else {
         format!("+site:{site}", site = site)
     };
-    let search_engine_id = env::var("SEARCH_ENGINE_ID").expect("search engine id is not defined");
-    let api_key = env::var("API_KEY").expect("api key is not defined");
+    let search_engine_id = match env::var("SEARCH_ENGINE_ID") {
+        Ok(id) => id,
+        Err(_) => {
+            error!("No token found in environment variable SEARCH_ENGINE_ID");
+            return Err("SEARCH_ENGINE_ID が設定されていません。".to_string());
+        }
+    };
+    let api_key = match env::var("API_KEY") {
+        Ok(key) => key,
+        Err(_) => {
+            error!("No token found in environment variable API_KEY");
+            return Err("API_KEY が設定されていません。".to_string());
+        }
+    };
+
     let url = format!(
     "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={q}{site}");
 
     let client = HttpClient::new();
     let result = match client.get(&url).await {
-        Ok(result) => {
-            match result.status_code {
-                StatusCode::OK => result,
-                StatusCode::Unauthorized => return Err("認証に失敗しました。".to_string()),
-                StatusCode::Forbidden => return Err("アクセス権限がありません。".to_string()),
-                StatusCode::NotFound => return Err("リソースが見つかりませんでした。".to_string()),
-                StatusCode::TooManyRequests => return Err("Google Search API へのリクエスト超過です。しばらくしてからやり直してください。".to_string()),
-                _ => return Err("予期しないエラーが発生しました。".to_string()),
-            }
-        }
+        Ok(result) => match result.status_code {
+            StatusCode::OK => result,
+            StatusCode::Unauthorized => return Err("認証に失敗しました。".to_string()),
+            StatusCode::Forbidden => return Err("アクセス権限がありません。".to_string()),
+            StatusCode::NotFound => return Err("リソースが見つかりませんでした。".to_string()),
+            StatusCode::TooManyRequests => return Err(
+                "Google Search API へのリクエスト超過です。しばらくしてからやり直してください。"
+                    .to_string(),
+            ),
+            _ => return Err("予期しないエラーが発生しました。".to_string()),
+        },
         Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),
     };
     let body = match result.json::<GoogleResponse>().await {

@@ -2,6 +2,7 @@ use chrono::{DateTime, NaiveDateTime};
 use rss::{Channel, Item};
 use serenity::client::Context;
 use std::error::Error;
+use tracing::{info, warn};
 
 use super::get_db_channel::get_db_channel;
 use crate::http::client::HttpClient;
@@ -116,12 +117,17 @@ pub async fn fetch_rss_feed(ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> 
             let date = match DateTime::parse_from_rfc2822(date) {
                 Ok(date) => date - chrono::Duration::hours(12),
                 Err(_) => {
+                    warn!("invalid date: {}", date);
                     // 形式が正しくなかったら除外するために 1970年1月1日を GMT 形式で DateTime に parse して返す
                     DateTime::parse_from_rfc2822("Thu, 01 Jan 1970 00:00:00 GMT")?
                 }
             };
 
             if date.naive_utc() > last_date {
+                info!(
+                    "new feed: {}",
+                    item.title.as_ref().unwrap_or(&"".to_string())
+                );
                 items.push(item.clone());
             }
         }

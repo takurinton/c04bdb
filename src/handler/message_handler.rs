@@ -2,6 +2,7 @@ use serenity::model::channel::Message;
 use serenity::model::prelude::{ChannelId, GuildId};
 use serenity::prelude::*;
 use serenity::utils::colours;
+use tracing::error;
 
 use crate::utils::fetch_chatgpt::fetch_chatgpt;
 
@@ -31,7 +32,7 @@ pub async fn message(ctx: Context, msg: Message) {
                 let _ = typing.stop();
 
                 if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
-                    println!("Error sending message: {:?}", why);
+                    error!("Error sending message: {:?}", why);
                 }
             }
         }
@@ -119,7 +120,7 @@ pub async fn message(ctx: Context, msg: Message) {
                     })
                     .await
                 {
-                    println!("Error sending message: {:?}", why);
+                    error!("Error sending message: {:?}", why);
                 }
             }
         }
