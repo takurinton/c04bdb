@@ -62,8 +62,8 @@ pub async fn github_search(language: &str) -> Result<Vec<GithubTrendItem>, Strin
 
     let body = match response.json::<GithubTrend>().await {
         Ok(body) => body,
-        Err(_) => {
-            error!("json parse failed");
+        Err(e) => {
+            error!("failed to parse json: {:?}", e);
             return Err("json の parse に失敗しました。".to_string());
         }
     };

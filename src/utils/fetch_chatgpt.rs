@@ -47,16 +47,16 @@ pub async fn fetch_chatgpt(content: String, prompts: Vec<String>) -> String {
         .await
     {
         Ok(response) => response,
-        Err(_) => {
-            error!("failed to request to chatgpt");
+        Err(e) => {
+            error!("failed to get chatgpt: {:?}", e);
             return "通信エラーが発生しました。".to_string();
         }
     };
 
     let body = match response.json::<ChatGPTResponse>().await {
         Ok(body) => body,
-        Err(_) => {
-            error!("failed to parse chatgpt response");
+        Err(e) => {
+            error!("failed to parse json: {:?}", e);
             return "コンテンツの取得に失敗しました。".to_string();
         }
     };

@@ -33,8 +33,7 @@ pub async fn wikipedia_search(search_text: &str) -> Result<(Response, String), S
     }) {
         Some(item) => item.link.clone(),
         None => {
-            error!("failed to find wikipedia link");
-            return Err("wikipedia の検索に失敗しました。".to_string());
+            return Err("結果がありませんでした。".to_string());
         }
     };
 
@@ -43,16 +42,16 @@ pub async fn wikipedia_search(search_text: &str) -> Result<(Response, String), S
     let client = HttpClient::new();
     let response = match client.get(&url).await {
         Ok(response) => response,
-        Err(_) => {
-            error!("failed to network request to wikipedia");
+        Err(e) => {
+            error!("failed to get wikipedia: {:?}", e);
             return Err("通信エラーが発生しました".to_string());
         }
     };
 
     let json = match response.json::<Response>().await {
         Ok(json) => json,
-        Err(_) => {
-            error!("failed to parse wikipedia response");
+        Err(e) => {
+            error!("failed to parse json: {:?}", e);
             return Err("jsonのparseに失敗しました".to_string());
         }
     };
