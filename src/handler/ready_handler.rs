@@ -87,15 +87,5 @@ pub async fn ready(ctx: Context) {
         info!("RSS retrieval is not performed in development mode.");
     }
 
-    // TODO: revert this
-    let channel = ChannelId(1160446523314810961);
-    let user_id = env::var("FOO_ID").unwrap();
-    let _ = channel
-        .send_message(&ctx.http, |m| {
-            let message = format!("<@!{}> お土産頼んだ!!!", user_id);
-            m.content(message)
-        })
-        .await;
-
     info!("bot is ready!")
 }
