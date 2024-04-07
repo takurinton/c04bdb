@@ -27,7 +27,7 @@ pub async fn ready(ctx: Context) {
 
     let mode = env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
 
-    if mode == "development" {
+    if mode == "production" {
         let rss_processor = ProcesserStruct;
         rss_processor.run(&ctx).await.unwrap();
     } else {
