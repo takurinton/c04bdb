@@ -1,6 +1,7 @@
 mod commands;
 mod handler;
 mod http;
+mod scheduler;
 mod url;
 mod utils;
 
