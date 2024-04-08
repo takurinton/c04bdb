@@ -15,7 +15,9 @@ pub(crate) struct ProcesserStruct;
 #[async_trait]
 impl Processer for ProcesserStruct {
     async fn fetch(&self, ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> {
-        fetch_atproto().await
+        let res = fetch_atproto().await;
+        println!("{:?}", res);
+        Ok(vec![])
     }
 
     async fn post_to_channel(&self, ctx: &Context, items: Vec<Item>) -> Result<(), Box<dyn Error>> {
