@@ -11,6 +11,7 @@ fn default_headers() -> HashMap<String, String> {
     headers
 }
 
+#[derive(Debug)]
 pub enum StatusCode {
     OK = 200,
     Created = 201,

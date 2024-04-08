@@ -16,7 +16,6 @@ pub(crate) struct ProcesserStruct;
 impl Processer for ProcesserStruct {
     async fn fetch(&self, ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> {
         let res = fetch_atproto().await;
-        println!("{:?}", res);
         Ok(vec![])
     }
 

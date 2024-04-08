@@ -5,6 +5,7 @@ use tokio::net::TcpStream;
 
 use super::client::StatusCode;
 
+#[derive(Debug)]
 pub struct HttpResponse {
     pub status_code: StatusCode,
     pub headers: HashMap<String, String>,
