@@ -26,9 +26,9 @@ pub async fn ready(ctx: Context) {
 
     let mode = env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
 
-    if mode == "production" {
-        let rss_processor = crate::scheduler::rss::ProcesserStruct;
-        rss_processor.run(&ctx).await.unwrap();
+    if mode == "development" {
+        // let rss_processor = crate::scheduler::rss::ProcesserStruct;
+        // rss_processor.run(&ctx).await.unwrap();
 
         let atproto_processor = crate::scheduler::atproto::ProcesserStruct;
         atproto_processor.run(&ctx).await.unwrap();
