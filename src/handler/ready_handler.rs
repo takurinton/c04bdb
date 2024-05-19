@@ -1,6 +1,5 @@
 use std::env;
 
-use crate::scheduler::rss::ProcesserStruct;
 use crate::{commands, scheduler::processer::Processer};
 
 use serenity::{client::Context, model::id::GuildId};
@@ -27,11 +26,17 @@ pub async fn ready(ctx: Context) {
 
     let mode = env::var("RUST_ENV").unwrap_or_else(|_| "development".to_string());
 
+    // 30分に1回、プロダクションのときのみ実行
     if mode == "production" {
-        let rss_processor = ProcesserStruct;
+        // RSS feed を取得する
+        let rss_processor = crate::scheduler::rss::ProcesserStruct;
         rss_processor.run(&ctx).await.unwrap();
+
+        // 部分ツイートを取得する
+        let atproto_processor = crate::scheduler::atproto::ProcesserStruct;
+        atproto_processor.run(&ctx).await.unwrap();
     } else {
-        info!("RSS retrieval is not performed in development mode.");
+        info!("RSS and 部分ツイート are not performed in development mode.");
     }
 
     info!("bot is ready!")
