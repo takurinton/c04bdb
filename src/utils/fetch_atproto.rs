@@ -1,6 +1,6 @@
 use std::env;
 
-use serde::{de, Deserialize};
+use serde::Deserialize;
 
 use crate::http::client::HttpClient;
 
@@ -78,32 +78,32 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
 }
 
 #[derive(Deserialize, Debug)]
-struct Author {
-    handle: String,
-    did: String,
+pub struct Author {
+    pub handle: String,
+    pub did: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct Post {
-    uri: String,
-    cid: String,
+pub struct Post {
+    pub uri: String,
+    pub cid: String,
     author: Author,
 }
 
 #[derive(Deserialize, Debug)]
-struct Feed {
-    post: Post,
+pub struct Feed {
+    pub post: Post,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct FeedResponse {
-    feed: Vec<Feed>,
+    pub feed: Vec<Feed>,
 }
 
 async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
     let session = create_session().await?;
     let mut client = HttpClient::new();
-    let params = "at://did:plc:c2f75sprlocrelfiftzblj6z/app.bsky.feed/aaair5qf7emhe";
+    let params = "at://did:plc:c2f75sprlocrelfiftzblj6z/app.bsky.feed.generator/aaair5qf7emhe";
     let url = format!(
         "https://bsky.social/xrpc/app.bsky.feed.getFeed?feed={}",
         params
