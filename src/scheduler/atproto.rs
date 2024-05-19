@@ -1,10 +1,9 @@
 use std::error::Error;
 
-use rss::Item;
 use serenity::{async_trait, client::Context, model::id::ChannelId};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
-use crate::utils::get_db_channel::get_db_channel;
+use crate::utils::{fetch_atproto::Feed, get_db_channel::get_db_channel};
 
 use super::processer::Processer;
 
@@ -13,23 +12,38 @@ use crate::utils::fetch_atproto::fetch_atproto;
 pub(crate) struct ProcesserStruct;
 
 #[async_trait]
-impl Processer for ProcesserStruct {
-    async fn fetch(&self, ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> {
+impl Processer<Feed> for ProcesserStruct {
+    async fn fetch(&self, _: &Context) -> Result<Vec<Feed>, Box<dyn Error>> {
         let res = fetch_atproto().await;
-        Ok(vec![])
+        match res {
+            Ok(res) => Ok(res),
+            Err(why) => {
+                error!("Error fetching atproto: {:?}", why);
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "API が取得できません。",
+                )));
+            }
+        }
     }
 
-    async fn post_to_channel(&self, ctx: &Context, items: Vec<Item>) -> Result<(), Box<dyn Error>> {
-        let channel = ChannelId(1208611584964825099);
+    async fn post_to_channel(&self, ctx: &Context, items: Vec<Feed>) -> Result<(), Box<dyn Error>> {
+        let channel = ChannelId(1191588266105917441);
+        // card にして投稿する
         for item in items {
-            let _ = match item.link {
-                Some(link) => {
-                    let _ = channel.send_message(&ctx.http, |m| m.content(link)).await;
-                }
-                None => {
-                    warn!("No link found in atproto feed: {:?}", item.title);
-                }
-            };
+            let avatar = item.post.author.avatar;
+            let auther = item.post.author.display_name;
+            let text = item.post.record.text;
+            let created_at = item.post.record.createdAt;
+            let _ = channel
+                .send_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.description(text)
+                            .author(|a| a.name(auther).icon_url(avatar).url("https://bsky.social/"))
+                            .footer(|f| f.text(created_at))
+                    })
+                })
+                .await;
         }
         Ok(())
     }
@@ -72,8 +86,8 @@ impl Processer for ProcesserStruct {
         info!("atproto retrieval is started.");
 
         let items = self.fetch(ctx).await?;
-        // self.post_to_channel(ctx, items).await?;
-        // self.update_db_channel(ctx).await?;
+        self.post_to_channel(ctx, items).await?;
+        self.update_db_channel(ctx).await?;
 
         info!("atproto retrieval is done.");
 

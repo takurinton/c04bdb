@@ -1,6 +1,6 @@
 use std::env;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::http::client::HttpClient;
 
@@ -78,29 +78,59 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Author {
-    pub handle: String,
-    pub did: String,
+pub struct Body {
+    pub feed: Vec<Feed>,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct Post {
-    pub uri: String,
-    pub cid: String,
-    author: Author,
-}
-
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Feed {
     pub post: Post,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct FeedResponse {
-    pub feed: Vec<Feed>,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Post {
+    pub uri: String,
+    pub cid: String,
+    pub author: Author,
+    pub record: Record,
+    // pub reply_count: u32,
+    // pub repost_count: u32,
+    // pub like_count: u32,
+    // pub indexed_at: String,
+    // pub viewer: Viewer,
+    pub labels: Vec<Label>,
 }
 
-async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Author {
+    pub did: String,
+    pub handle: String,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
+    pub avatar: String,
+    // pub viewer: Viewer,
+    pub labels: Vec<Label>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Record {
+    #[serde(rename = "$type")]
+    pub record_type: String,
+    pub createdAt: String,
+    pub langs: Vec<String>,
+    pub text: String,
+}
+
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct Viewer {
+//     pub muted: bool,
+//     pub blocked_by: bool,
+// }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Label {}
+
+async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     let session = create_session().await?;
     let mut client = HttpClient::new();
     let params = "at://did:plc:c2f75sprlocrelfiftzblj6z/app.bsky.feed.generator/aaair5qf7emhe";
@@ -126,7 +156,7 @@ async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    let json = match response.json::<FeedResponse>().await {
+    let json = match response.json::<Body>().await {
         Ok(json) => json,
         Err(why) => {
             println!("Error: {:?}", why);
@@ -137,16 +167,10 @@ async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    for feed in json.feed {
-        println!("{:?}", feed.post);
-    }
-
-    Ok(())
+    Ok(json)
 }
 
-pub async fn fetch_atproto() -> Result<CreateSessionResponse, Box<dyn std::error::Error>> {
-    get_feed().await?;
-    Ok(CreateSessionResponse {
-        accessJwt: "".to_string(),
-    })
+pub async fn fetch_atproto() -> Result<Vec<Feed>, Box<dyn std::error::Error>> {
+    let res = get_feed().await?;
+    Ok(res.feed)
 }
