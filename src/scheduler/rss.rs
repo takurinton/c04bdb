@@ -11,7 +11,7 @@ use super::processer::Processer;
 pub(crate) struct ProcesserStruct;
 
 #[async_trait]
-impl Processer for ProcesserStruct {
+impl Processer<Item> for ProcesserStruct {
     async fn fetch(&self, ctx: &Context) -> Result<Vec<Item>, Box<dyn Error>> {
         fetch_rss_feed(ctx).await
     }
