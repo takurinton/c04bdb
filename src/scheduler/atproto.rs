@@ -13,8 +13,8 @@ pub(crate) struct ProcesserStruct;
 
 #[async_trait]
 impl Processer<Feed> for ProcesserStruct {
-    async fn fetch(&self, _: &Context) -> Result<Vec<Feed>, Box<dyn Error>> {
-        let res = fetch_atproto().await;
+    async fn fetch(&self, ctx: &Context) -> Result<Vec<Feed>, Box<dyn Error>> {
+        let res = fetch_atproto(ctx).await;
         match res {
             Ok(res) => Ok(res),
             Err(why) => {

@@ -1,8 +1,13 @@
 use std::env;
 
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use serenity::client::Context;
 
 use crate::http::client::HttpClient;
+use std::error::Error;
+
+use super::get_db_channel::get_db_channel;
 
 #[derive(Deserialize)]
 #[allow(non_snake_case)]
@@ -116,6 +121,7 @@ pub struct Author {
 pub struct Record {
     #[serde(rename = "$type")]
     pub record_type: String,
+    #[warn(non_snake_case)]
     pub createdAt: String,
     pub langs: Vec<String>,
     pub text: String,
@@ -170,7 +176,56 @@ async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     Ok(json)
 }
 
-pub async fn fetch_atproto() -> Result<Vec<Feed>, Box<dyn std::error::Error>> {
+pub async fn fetch_atproto(ctx: &Context) -> Result<Vec<Feed>, Box<dyn std::error::Error>> {
     let res = get_feed().await?;
-    Ok(res.feed)
+    let last_date = get_last_date(ctx).await?;
+    let last_date = NaiveDateTime::parse_from_str(&last_date, "%Y-%m-%d %H:%M:%S")?;
+
+    let feeds = res
+        .feed
+        .into_iter()
+        .filter(|feed| {
+            let created_at = NaiveDateTime::parse_from_str(
+                &feed.post.record.createdAt,
+                "%Y-%m-%dT%H:%M:%S%.3fZ",
+            )
+            .unwrap();
+            created_at > last_date
+        })
+        .collect::<Vec<_>>();
+
+    Ok(feeds)
+}
+
+async fn get_last_date(ctx: &Context) -> Result<String, Box<dyn Error>> {
+    let db_channel = get_db_channel(ctx).await?;
+
+    let messages = match db_channel
+        .messages(&ctx.http, |retriever| retriever.limit(100))
+        .await
+    {
+        Ok(messages) => messages
+            .into_iter()
+            .filter(|message| message.content.starts_with("rss_last_date"))
+            .collect::<Vec<_>>(),
+        Err(_) => {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "DBチャンネルが見つかりません。",
+            )))
+        }
+    };
+
+    // last_date は基本的に1つしか存在しないはずなので、0番目を取得
+    let last_date = match messages.first() {
+        // rss_last_date %Y-%m-%d %H:%M:%S という形式で保存されているので、それの日付部分だけを取得
+        // nth(1) は %Y-%m-%d の部分, nth(2) は %H:%M:%S の部分
+        Some(message) => {
+            let date = message.content.split_whitespace().nth(1).unwrap();
+            let time = message.content.split_whitespace().nth(2).unwrap();
+            format!("{} {}", date, time)
+        }
+        None => chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+    };
+    Ok(last_date)
 }
