@@ -1,6 +1,6 @@
 use std::env;
 
-use serde::Deserialize;
+use serde::{de, Deserialize};
 
 use crate::http::client::HttpClient;
 
@@ -77,14 +77,33 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     Ok(json)
 }
 
-pub struct Feed {
-    limit: i32,
+#[derive(Deserialize, Debug)]
+struct Author {
+    handle: String,
+    did: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct Post {
+    uri: String,
+    cid: String,
+    author: Author,
+}
+
+#[derive(Deserialize, Debug)]
+struct Feed {
+    post: Post,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct FeedResponse {
+    feed: Vec<Feed>,
 }
 
 async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
     let session = create_session().await?;
     let mut client = HttpClient::new();
-    let params = "at://did:plc:c2f75sprlocrelfiftzblj6z/app.bsky.feed.post/aaair5qf7emhe";
+    let params = "at://did:plc:c2f75sprlocrelfiftzblj6z/app.bsky.feed/aaair5qf7emhe";
     let url = format!(
         "https://bsky.social/xrpc/app.bsky.feed.getFeed?feed={}",
         params
@@ -107,7 +126,7 @@ async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    let json = match response.json::<serde_json::Value>().await {
+    let json = match response.json::<FeedResponse>().await {
         Ok(json) => json,
         Err(why) => {
             println!("Error: {:?}", why);
@@ -118,7 +137,9 @@ async fn get_feed() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    println!("{:?}", json);
+    for feed in json.feed {
+        println!("{:?}", feed.post);
+    }
 
     Ok(())
 }
