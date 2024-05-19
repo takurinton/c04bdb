@@ -44,7 +44,7 @@ impl Processer<Item> for ProcesserStruct {
         };
 
         let messages = db_channel
-            .messages(&ctx.http, |retriever| retriever.limit(1))
+            .messages(&ctx.http, |retriever| retriever.limit(100))
             .await
             .unwrap()
             .into_iter()

@@ -34,7 +34,19 @@ impl Processer<Feed> for ProcesserStruct {
             let avatar = item.post.author.avatar;
             let auther = item.post.author.display_name;
             let text = item.post.record.text;
-            let created_at = item.post.record.createdAt;
+            let created_at = match chrono::NaiveDateTime::parse_from_str(
+                &item.post.record.createdAt,
+                "%Y-%m-%dT%H:%M:%S%.3fZ",
+            ) {
+                Ok(created_at) => created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                Err(why) => {
+                    error!("Error parsing created_at: {:?}", why);
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        "created_at のパースに失敗しました。",
+                    )));
+                }
+            };
             let _ = channel
                 .send_message(&ctx.http, |m| {
                     m.embed(|e| {
@@ -61,7 +73,7 @@ impl Processer<Feed> for ProcesserStruct {
         };
 
         let messages = db_channel
-            .messages(&ctx.http, |retriever| retriever.limit(1))
+            .messages(&ctx.http, |retriever| retriever.limit(100))
             .await
             .unwrap()
             .into_iter()

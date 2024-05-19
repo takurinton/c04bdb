@@ -206,7 +206,7 @@ async fn get_last_date(ctx: &Context) -> Result<String, Box<dyn Error>> {
     {
         Ok(messages) => messages
             .into_iter()
-            .filter(|message| message.content.starts_with("rss_last_date"))
+            .filter(|message| message.content.starts_with("atproto_last_date"))
             .collect::<Vec<_>>(),
         Err(_) => {
             return Err(Box::new(std::io::Error::new(
