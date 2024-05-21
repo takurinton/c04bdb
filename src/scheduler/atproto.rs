@@ -38,7 +38,10 @@ impl Processer<Feed> for ProcesserStruct {
                 &item.post.record.createdAt,
                 "%Y-%m-%dT%H:%M:%S%.3fZ",
             ) {
-                Ok(created_at) => created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                Ok(created_at) => {
+                    let created_at = created_at + chrono::Duration::hours(9);
+                    created_at.format("%Y-%m-%d %H:%M:%S").to_string()
+                }
                 Err(why) => {
                     error!("Error parsing created_at: {:?}", why);
                     return Err(Box::new(std::io::Error::new(
