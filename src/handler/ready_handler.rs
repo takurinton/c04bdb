@@ -3,7 +3,7 @@ use std::env;
 use crate::{commands, scheduler::processer::Processer};
 
 use serenity::{client::Context, model::id::GuildId};
-use tracing::info;
+use tracing::{error, info};
 
 pub async fn ready(ctx: Context) {
     let guild_id = GuildId(889012300705591307);
@@ -30,11 +30,17 @@ pub async fn ready(ctx: Context) {
     if mode == "production" {
         // RSS feed を取得する
         let rss_processor = crate::scheduler::rss::ProcesserStruct;
-        rss_processor.run(&ctx).await.unwrap();
+        match rss_processor.run(&ctx).await {
+            Ok(_) => info!("RSS feed fetched successfully."),
+            Err(why) => error!("Error fetching RSS feed: {:?}", why),
+        }
 
         // 部分ツイートを取得する
         let atproto_processor = crate::scheduler::atproto::ProcesserStruct;
-        atproto_processor.run(&ctx).await.unwrap();
+        match atproto_processor.run(&ctx).await {
+            Ok(_) => info!("部分ツイート fetched successfully."),
+            Err(why) => error!("Error fetching 部分ツイート: {:?}", why),
+        }
     } else {
         info!("RSS and 部分ツイート are not performed in development mode.");
     }
