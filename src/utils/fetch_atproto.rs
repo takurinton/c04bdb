@@ -3,6 +3,7 @@ use std::env;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use serenity::client::Context;
+use tracing::error;
 
 use crate::http::client::HttpClient;
 use std::error::Error;
@@ -30,7 +31,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     let identifier = match env::var("BSKY_IDENTIFIER") {
         Ok(identifier) => identifier,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "BSKY_IDENTIFIER が取得できません。",
@@ -40,7 +41,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     let password = match env::var("BSKY_PASS") {
         Ok(password) => password,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "BSKY_PASS が取得できません。",
@@ -60,7 +61,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     {
         Ok(response) => response,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "API が取得できません。",
@@ -71,7 +72,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     let json = match response.json::<CreateSessionResponse>().await {
         Ok(json) => json,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "JSONのparseに失敗しました.",
@@ -154,7 +155,7 @@ async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     {
         Ok(response) => response,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "API が取得できません。",
@@ -165,7 +166,7 @@ async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     let json = match response.json::<Body>().await {
         Ok(json) => json,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "JSONのparseに失敗しました.",
