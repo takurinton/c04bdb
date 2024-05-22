@@ -3,6 +3,7 @@ use std::env;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use serenity::client::Context;
+use tracing::error;
 
 use crate::http::client::HttpClient;
 use std::error::Error;
@@ -30,7 +31,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     let identifier = match env::var("BSKY_IDENTIFIER") {
         Ok(identifier) => identifier,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "BSKY_IDENTIFIER が取得できません。",
@@ -40,7 +41,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     let password = match env::var("BSKY_PASS") {
         Ok(password) => password,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "BSKY_PASS が取得できません。",
@@ -60,7 +61,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     {
         Ok(response) => response,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "API が取得できません。",
@@ -71,7 +72,7 @@ async fn create_session() -> Result<CreateSessionResponse, Box<dyn std::error::E
     let json = match response.json::<CreateSessionResponse>().await {
         Ok(json) => json,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "JSONのparseに失敗しました.",
@@ -103,7 +104,7 @@ pub struct Post {
     // pub like_count: u32,
     // pub indexed_at: String,
     // pub viewer: Viewer,
-    pub labels: Vec<Label>,
+    // pub labels: Vec<Label>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -114,16 +115,16 @@ pub struct Author {
     pub display_name: String,
     pub avatar: String,
     // pub viewer: Viewer,
-    pub labels: Vec<Label>,
+    // pub labels: Vec<Label>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Record {
-    #[serde(rename = "$type")]
-    pub record_type: String,
+    // #[serde(rename = "$type")]
+    // pub record_type: String,
     #[warn(non_snake_case)]
     pub createdAt: String,
-    pub langs: Vec<String>,
+    // pub langs: Vec<String>,
     pub text: String,
 }
 
@@ -133,8 +134,8 @@ pub struct Record {
 //     pub blocked_by: bool,
 // }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Label {}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct Label {}
 
 async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     let session = create_session().await?;
@@ -154,7 +155,7 @@ async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     {
         Ok(response) => response,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "API が取得できません。",
@@ -165,7 +166,7 @@ async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     let json = match response.json::<Body>().await {
         Ok(json) => json,
         Err(why) => {
-            println!("Error: {:?}", why);
+            error!("Error: {:?}", why);
             return Err(Box::new(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 "JSONのparseに失敗しました.",
