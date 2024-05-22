@@ -104,7 +104,7 @@ pub struct Post {
     // pub like_count: u32,
     // pub indexed_at: String,
     // pub viewer: Viewer,
-    pub labels: Vec<Label>,
+    // pub labels: Vec<Label>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -115,16 +115,16 @@ pub struct Author {
     pub display_name: String,
     pub avatar: String,
     // pub viewer: Viewer,
-    pub labels: Vec<Label>,
+    // pub labels: Vec<Label>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Record {
-    #[serde(rename = "$type")]
-    pub record_type: String,
+    // #[serde(rename = "$type")]
+    // pub record_type: String,
     #[warn(non_snake_case)]
     pub createdAt: String,
-    pub langs: Vec<String>,
+    // pub langs: Vec<String>,
     pub text: String,
 }
 
@@ -134,8 +134,8 @@ pub struct Record {
 //     pub blocked_by: bool,
 // }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Label {}
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct Label {}
 
 async fn get_feed() -> Result<Body, Box<dyn std::error::Error>> {
     let session = create_session().await?;
