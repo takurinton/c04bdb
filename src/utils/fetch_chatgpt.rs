@@ -22,14 +22,21 @@ struct ChatGPTResponse {
 pub async fn fetch_chatgpt(content: String, prompts: Vec<String>) -> String {
     let prompts = prompts
         .iter()
-        .map(|p| format!(r#"{{ "role": "system", "content": "{}" }},"#, p))
+        .map(|p| {
+            format!(
+                r#"{{ "role": "system", "content": "{}" }},"#,
+                p.replace("\"", "").replace("\n", "")
+            )
+        })
         .collect::<Vec<String>>()
         .join("");
 
     let request_body = format!(
-        r#"{{ "model": "gpt-3.5-turbo", "messages": [{}{{ "role": "user", "content": "{}" }}] }}"#,
+        r#"{{ "model": "gpt-4o", "messages": [{}{{ "role": "user", "content": "{}" }}] }}"#,
         prompts, content
     );
+
+    println!("request_body: {}", request_body);
 
     let open_api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
