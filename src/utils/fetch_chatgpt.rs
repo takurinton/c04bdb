@@ -36,8 +36,6 @@ pub async fn fetch_chatgpt(content: String, prompts: Vec<String>) -> String {
         prompts, content
     );
 
-    println!("request_body: {}", request_body);
-
     let open_api_key = match env::var("OPENAI_API_KEY") {
         Ok(key) => key,
         Err(_) => {
