@@ -31,23 +31,23 @@ static PROMPTS: &[&str] = &[r#"
 
 [おじさん構文例:]
 おはよー！チュッ❤
-〇〇ﾁｬﾝ、可愛らしいネ٩(♡ε♡ )۶
-〇〇ﾁｬﾝ、だいすき！❤(ӦｖӦ｡)
-今日のお弁当が美味しくて、一緒に〇〇チャンのことも、食べちゃいたいナ〜😍💕（笑）✋ナンチャッテ😃💗
+{名前}ﾁｬﾝ、可愛らしいネ٩(♡ε♡ )۶
+{名前}ﾁｬﾝ、だいすき！❤(ӦｖӦ｡)
+今日のお弁当が美味しくて、一緒に{名前}チャンのことも、食べちゃいたいナ〜😍💕（笑）✋ナンチャッテ😃💗
 お疲れ様〜٩(ˊᗜˋ)و🎵今日はどんな一日だっタ😘❗❓僕は、すごく心配だヨ(..)😱💦😰そんなときは、オイシイ🍗🤤もの食べて、元気出さなきゃだネ😆
-〇〇ちゃんのお目々、キラキラ(^з<)😘😃♥️ してるネ❗💕ホント可愛すぎだよ〜😆マッタクもウ😃☀️ 🎵😘(^o^)
+{名前}ちゃんのお目々、キラキラ(^з<)😘😃♥️ してるネ❗💕ホント可愛すぎだよ〜😆マッタクもウ😃☀️ 🎵😘(^o^)
 オハヨー😚😘本日のランチ🍴は奮発してきんぴらごぼう付き(^^)😆（笑）誰だ、メタボなんて言ったやツハ(^^;😰💦
-僕は、すごく心配だよ^^;(TT)(^^;(--;)そんなときは、美味しいもの食べて、元気出さなきゃダネ😚(^з<)(^^)😘オイラは〇〇ちゃん一筋ダヨ（￣▽￣）
+僕は、すごく心配だよ^^;(TT)(^^;(--;)そんなときは、美味しいもの食べて、元気出さなきゃダネ😚(^з<)(^^)😘オイラは{名前}ちゃん一筋ダヨ（￣▽￣）
 誰だ△△なんて言ったやつは💦
-〇〇ﾁｬﾝ、今日は、□□ｶﾅ(??)
+{名前}ﾁｬﾝ、今日は、□□ｶﾅ(??)
 おぢさんは今日、☆☆を食べたよ〜👄
 ﾏｯﾀｸもう😡 
 おぢさんのﾊﾞｶﾊﾞｶﾊﾞｶ(´ω*｀)
 今日も一日、がんばろう🤗└( 'ω')┘ムキッ
-〇〇ﾁｬﾝが風邪🍃😷💊になると、おぢさん🤓心配！😕🤔😭
+{名前}ﾁｬﾝが風邪🍃😷💊になると、おぢさん🤓心配！😕🤔😭
 女優さんかと思った😍
-〇〇ﾁｬﾝにとっていい日になりますように(≧∇≦)b
-ボクは〇〇ﾁｬﾝの味方だからね👫🧑‍🤝‍🧑
+{名前}ﾁｬﾝにとっていい日になりますように(≧∇≦)b
+ボクは{名前}ﾁｬﾝの味方だからね👫🧑‍🤝‍🧑
 "#];
 
 pub async fn message(ctx: Context, msg: Message) {
@@ -61,17 +61,22 @@ pub async fn message(ctx: Context, msg: Message) {
     let mentions = msg.mentions;
     if mentions.len() > 0 {
         let bot_id = "1097033145674649675";
+        let user_name = msg.author.name.clone();
 
         for mention in mentions {
             if mention.id.0.to_string() == bot_id {
-                let text = match regex::Regex::new(r"<@!\d+>").unwrap() {
+                let text = match regex::Regex::new(r"<@1097033145674649675>").unwrap() {
                     re => re.replace_all(content, ""),
                 }
                 .replace("\n", " ");
 
                 let typing = msg.channel_id.start_typing(&ctx.http).unwrap();
 
-                let prompts = PROMPTS.iter().map(|p| p.to_string()).collect();
+                let mut prompts: Vec<&str> = PROMPTS.to_vec();
+                prompts.push(Box::leak(
+                    format!("今回話しかけてくれたのは{}チャンです！", user_name).into_boxed_str(),
+                ));
+                let prompts = prompts.iter().map(|p| p.to_string()).collect();
                 let response = fetch_chatgpt(text, prompts).await;
 
                 let _ = typing.stop();
