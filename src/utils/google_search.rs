@@ -54,7 +54,6 @@ pub async fn google_search(
     "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={}{site}", encode(q));
 
     let client = HttpClient::new();
-    let _r = client.get(&url).await.unwrap();
     let result = match client.get(&url).await {
         Ok(result) => match result.status_code {
             StatusCode::OK => result,
