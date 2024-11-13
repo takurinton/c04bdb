@@ -2,7 +2,10 @@ use serde::Deserialize;
 use std::env;
 use tracing::error;
 
-use crate::http::client::{HttpClient, StatusCode};
+use crate::{
+    http::client::{HttpClient, StatusCode},
+    utils::encode::encode,
+};
 
 #[derive(Deserialize, Debug)]
 pub struct GoogleItem {
@@ -48,12 +51,14 @@ pub async fn google_search(
     };
 
     let url = format!(
-    "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={q}{site}");
+    "https://www.googleapis.com/customsearch/v1?cx={search_engine_id}&key={api_key}&hl=ja{search_type}&q={}{site}", encode(q));
 
     let client = HttpClient::new();
+    let _r = client.get(&url).await.unwrap();
     let result = match client.get(&url).await {
         Ok(result) => match result.status_code {
             StatusCode::OK => result,
+            StatusCode::BadRequest => return Err("リクエストが不正です。".to_string()),
             StatusCode::Unauthorized => return Err("認証に失敗しました。".to_string()),
             StatusCode::Forbidden => return Err("アクセス権限がありません。".to_string()),
             StatusCode::NotFound => return Err("リソースが見つかりませんでした。".to_string()),
@@ -61,7 +66,12 @@ pub async fn google_search(
                 "Google Search API へのリクエスト超過です。しばらくしてからやり直してください。"
                     .to_string(),
             ),
-            _ => return Err("予期しないエラーが発生しました。".to_string()),
+            status => {
+                return Err(
+                    format!("予期しないエラーが発生しました。status: {}", status as u16)
+                        .to_string(),
+                );
+            }
         },
         Err(_) => return Err("Google 検索でエラーが発生しました。".to_string()),
     };

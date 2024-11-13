@@ -1,3 +1,4 @@
+pub mod encode;
 pub mod fetch_atproto;
 pub mod fetch_chatgpt;
 pub mod fetch_rss_feed;
